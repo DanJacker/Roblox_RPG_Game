@@ -1,0 +1,278 @@
+--[[
+	Combat Client - Script tấn công mới
+	- Nhấn M1 (chuột trái) để tấn công
+	- Tự động tìm mục tiêu trong phạm vi
+	- Gửi damage đến server qua CombatRemote
+]]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+
+-- ========== CẤU HÌNH ==========
+local CONFIG = {
+	COOLDOWN = 1,			-- Thời gian chờ giữa các đòn tấn công (giây)
+	ATTACK_RANGE = 15,		-- Phạm vi tấn công (studs)
+	DAMAGE = 10,			-- Sát thương mỗi đòn
+	ANIMATION_DURATION = 0.5,	-- Thời gian animation (giây)
+}
+-- =============================
+
+-- Biến theo dõi
+local lastAttackTime = 0
+local attackTrack = nil
+local isAttacking = false
+
+-- Lấy CombatRemote và Animation
+local combatRemote = ReplicatedStorage:WaitForChild("CombatRemote")
+local animationsFolder = ReplicatedStorage:WaitForChild("Animations")
+local basicAttackAnim = animationsFolder:WaitForChild("Basicattack")
+local effectsFolder = ReplicatedStorage:FindFirstChild("Effects")
+
+print("[CombatClient] Animation loaded: " .. basicAttackAnim.AnimationId)
+
+-- ========== HÀM CHÍNH ==========
+
+-- Tạo VFX cho attack
+local function createAttackVFX(character)
+	local rootPart = character:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return nil end
+	
+	local vfxTemplate = effectsFolder and effectsFolder:FindFirstChild("AttackVFX")
+	if not vfxTemplate then return nil end
+	
+	local vfx = vfxTemplate:Clone()
+	vfx.Name = "AttackEffect"
+	vfx.Parent = rootPart
+	vfx.Anchored = true
+	vfx.CanCollide = false
+	vfx.Massless = true
+	
+	-- Đặt VFX trước thân nhân vật 5 studs
+	vfx.CFrame = rootPart.CFrame * CFrame.new(0, 0, -5)
+	
+	-- Phát particle
+	for _, child in pairs(vfx:GetChildren()) do
+		if child:IsA("ParticleEmitter") then
+			child:Emit(30)
+		end
+	end
+	
+	-- Xóa sau khi hoàn thành
+	task.delay(0.6, function()
+		if vfx then vfx:Destroy() end
+	end)
+	
+	return vfx
+end
+
+-- Tạo VFX khi đánh trúng
+local function createImpactVFX(target)
+	if not target then return nil end
+	
+	local targetRoot = target:FindFirstChild("HumanoidRootPart")
+	if not targetRoot then return nil end
+	
+	local vfxTemplate = effectsFolder and effectsFolder:FindFirstChild("ImpactVFX")
+	if not vfxTemplate then return nil end
+	
+	local vfx = vfxTemplate:Clone()
+	vfx.Name = "ImpactEffect"
+	vfx.Parent = targetRoot
+	vfx.CFrame = targetRoot.CFrame
+	vfx.Anchored = true
+	vfx.CanCollide = false
+	vfx.Massless = true
+	
+	-- Phát particle
+	for _, child in pairs(vfx:GetChildren()) do
+		if child:IsA("ParticleEmitter") then
+			child:Emit(60)
+		end
+	end
+	
+	-- Xóa sau khi hoàn thành
+	task.delay(0.5, function()
+		if vfx then vfx:Destroy() end
+	end)
+	
+	return vfx
+end
+
+-- Phát animation tấn công
+local function playAttackAnimation()
+	local character = player.Character
+	if not character then 
+		warn("[CombatClient] No character")
+		return false 
+	end
+	
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then 
+		warn("[CombatClient] No Humanoid")
+		return false 
+	end
+	
+	-- Lấy Animator từ Humanoid
+	local animator = humanoid:FindFirstChildOfClass("Animator")
+	if not animator then
+		animator = Instance.new("Animator")
+		animator.Parent = humanoid
+		print("[CombatClient] Created new Animator")
+	end
+	
+	
+	print("[CombatClient] Playing animation: " .. basicAttackAnim.AnimationId)
+	
+	-- Dừng animation cũ nếu có
+	if attackTrack then
+		attackTrack:Stop()
+	end
+	
+	-- Load và phát animation
+	local success, result = pcall(function()
+		attackTrack = animator:LoadAnimation(basicAttackAnim)
+		attackTrack.Priority = Enum.AnimationPriority.Action
+		attackTrack.Looped = false
+		attackTrack:Play()
+		print("[CombatClient] Animation track length: " .. tostring(attackTrack.Length))
+	end)
+	
+	if not success then
+		warn("[CombatClient] Animation lỗi: " .. tostring(result))
+		-- Khôi phục Animate script nếu lỗi
+		if animateScript then
+			animateScript.Enabled = wasAnimateEnabled
+		end
+		return false
+	end
+	
+	print("[CombatClient] Animation played successfully!")
+	
+
+	
+	return true
+end
+
+-- Tìm mục tiêu gần nhất trong phạm vi
+local function findNearestTarget()
+	local character = player.Character
+	if not character then return nil end
+	
+	local rootPart = character:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return nil end
+	
+	local nearestTarget = nil
+	local nearestDistance = CONFIG.ATTACK_RANGE
+	
+	-- Tìm trong tất cả objects có Humanoid
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("Model") and obj ~= character then
+			local humanoid = obj:FindFirstChildOfClass("Humanoid")
+			local objRoot = obj:FindFirstChild("HumanoidRootPart")
+			
+			if humanoid and humanoid.Health > 0 and objRoot then
+				local distance = (rootPart.Position - objRoot.Position).Magnitude
+				if distance < nearestDistance then
+					nearestDistance = distance
+					nearestTarget = obj
+				end
+			end
+		end
+	end
+	
+	-- Tìm trong các player khác
+	for _, otherPlayer in ipairs(Players:GetPlayers()) do
+		if otherPlayer ~= player and otherPlayer.Character then
+			local otherChar = otherPlayer.Character
+			local humanoid = otherChar:FindFirstChildOfClass("Humanoid")
+			local otherRoot = otherChar:FindFirstChild("HumanoidRootPart")
+			
+			if humanoid and humanoid.Health > 0 and otherRoot then
+				local distance = (rootPart.Position - otherRoot.Position).Magnitude
+				if distance < nearestDistance then
+					nearestDistance = distance
+					nearestTarget = otherPlayer
+				end
+			end
+		end
+	end
+	
+	if nearestTarget then
+		print("[CombatClient] Mục tiêu: " .. nearestTarget.Name .. " (" .. string.format("%.1f", nearestDistance) .. " studs)")
+	end
+	
+	return nearestTarget
+end
+
+-- Gây sát thương (gửi đến server)
+local function dealDamage(target)
+	if not target then return false end
+	
+	local success, err = pcall(function()
+		combatRemote:FireServer(target, CONFIG.DAMAGE)
+	end)
+	
+	if success then
+		lastAttackTime = tick()
+		print("[CombatClient] Đã tấn công " .. (target.Name or "unknown") .. " - " .. CONFIG.DAMAGE .. " damage")
+		return true
+	else
+		warn("[CombatClient] Lỗi gửi damage: " .. tostring(err))
+		return false
+	end
+end
+
+-- Xử lý tấn công khi nhấn M1
+local function onAttack()
+	-- Kiểm tra cooldown
+	local timeSinceLastAttack = tick() - lastAttackTime
+	if timeSinceLastAttack < CONFIG.COOLDOWN then
+		print("[CombatClient] Cooldown: " .. string.format("%.1f", CONFIG.COOLDOWN - timeSinceLastAttack) .. "s")
+		return
+	end
+	
+	-- Phát animation
+	playAttackAnimation()
+	
+	-- Tạo VFX attack
+	local character = player.Character
+	if character then
+		createAttackVFX(character)
+	end
+	
+	-- Tìm mục tiêu và gây damage
+	local target = findNearestTarget()
+	if target then
+		dealDamage(target)
+		-- Tạo VFX impact khi đánh trúng
+		createImpactVFX(target)
+	else
+		print("[CombatClient] Không có mục tiêu trong phạm vi " .. CONFIG.ATTACK_RANGE .. " studs")
+	end
+end
+
+-- ========== INPUT HANDLER ==========
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	-- Chỉ xử lý M1 (chuột trái)
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+		return
+	end
+	
+	-- Log để debug
+	print("[CombatClient] M1 pressed!")
+	
+	-- Thực hiện tấn công
+	onAttack()
+end)
+
+-- ========== KHỞI TẠO ==========
+
+print("[CombatClient] Script đã load!")
+print("[CombatClient] Animation: Basicattack (từ ReplicatedStorage.Animations)")
+print("[CombatClient] Range: " .. CONFIG.ATTACK_RANGE .. " studs")
+print("[CombatClient] Damage: " .. CONFIG.DAMAGE)
+print("[CombatClient] Cooldown: " .. CONFIG.COOLDOWN .. "s")
