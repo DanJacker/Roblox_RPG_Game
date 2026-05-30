@@ -40,7 +40,6 @@ local function fireFireball()
     local currentTime = tick()
     if currentTime - lastFireTime < COOLDOWN then
         local remaining = math.ceil(COOLDOWN - (currentTime - lastFireTime))
-        print("Fireball on cooldown: " .. remaining .. "s remaining")
         return
     end
     
@@ -52,7 +51,6 @@ local function fireFireball()
     fireballRemote:FireServer("Launch", handPos)
     lastFireTime = currentTime
     
-    print("Fireball launched!")
 end
 
 -- Handle key input
@@ -65,4 +63,3 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-print("Fireball Client loaded! Press Z to shoot fireball.")

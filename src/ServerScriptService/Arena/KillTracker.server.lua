@@ -1,7 +1,6 @@
 -- Kill Tracker - Theo dõi kills khi player chết
 local Players = game:GetService("Players")
 
-print("[KillTracker] Đang khởi động...")
 
 -- Lưu trữ người tấn công cuối cùng của mỗi player
 local lastAttacker = {}
@@ -89,6 +88,5 @@ _G.SetLastAttacker = function(victimPlayer, attackerPlayer)
 	lastAttacker[victimPlayer.UserId] = attackerPlayer.Name
 end
 
-print("[KillTracker] Đã khởi động thành công!")
 
 return nil

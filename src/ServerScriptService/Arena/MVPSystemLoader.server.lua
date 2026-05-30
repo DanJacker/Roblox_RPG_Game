@@ -1,7 +1,6 @@
 -- MVPSystem Loader - Tự động load MVPSystem khi game start
 local ServerScriptService = game:GetService("ServerScriptService")
 
-print("[MVPSystemLoader] Đang load MVPSystem...")
 
 local arenaFolder = ServerScriptService:FindFirstChild("Arena")
 if not arenaFolder then
@@ -21,10 +20,7 @@ local success, result = pcall(function()
 end)
 
 if success then
-	print("[MVPSystemLoader] ✓ MVPSystem loaded successfully!")
-	print("[MVPSystemLoader] _G.MVPSystem: " .. tostring(_G.MVPSystem ~= nil))
 else
 	warn("[MVPSystemLoader] ✗ Failed to load MVPSystem: " .. tostring(result))
 end
 
-print("[MVPSystemLoader] Hoàn tất!")

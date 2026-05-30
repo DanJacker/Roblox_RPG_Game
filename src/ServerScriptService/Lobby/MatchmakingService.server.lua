@@ -17,7 +17,6 @@ end
 if not _G.Security then
 	warn("[MatchmakingService] SecurityManager không khả dụng! Một số tính năng bảo mật sẽ bị vô hiệu hóa.")
 else
-	print("[MatchmakingService] SecurityManager đã sẵn sàng")
 end
 -- Modules (vẫn ở ReplicatedStorage)
 local RankingSystem = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("RankingSystem"))
@@ -122,8 +121,6 @@ local function waitForBotManager()
 		task.wait(0.5)
 	end
 	if _G.BotManager then
-		print("[Matchmaking] BotManager đã sẵn sàng!")
-		print("[Matchmaking] BotManager.SpawnBotForTeam = " .. tostring(_G.BotManager.SpawnBotForTeam))
 	else
 		warn("[Matchmaking] BotManager KHÔNG KHẢ DỤNG sau " .. maxWait .. " giây!")
 	end
@@ -131,7 +128,6 @@ local function waitForBotManager()
 end
 -- Gọi ngay khi script khởi động và ĐỢI HOÀN TẤT
 local botManagerReady = waitForBotManager()
-print("[Matchmaking] BotManager ready: " .. tostring(botManagerReady))
 -- Job ID của server hiện tại
 local currentJobId = game.JobId
 -- Match ID counter
@@ -183,7 +179,6 @@ local function damageNearbyPlayers(position, damage, radius)
                     local finalDamage = math.floor(damage * (1 - distance / radius))
                     if finalDamage > 0 then
                         humanoid:TakeDamage(finalDamage)
-                        print("[House] " .. player.Name .. " nhận " .. finalDamage .. " damage từ vụ nổ")
                     end
                 end
             end
@@ -194,7 +189,6 @@ end
 local function destroyHouse(house)
     if not house or not house.Parent then return end
     
-    print("[House] Đang phá hủy nhà: " .. house.Name)
     
     local explosion = Instance.new("Explosion")
     explosion.BlastPressure = 0
@@ -245,7 +239,6 @@ local function onHouseHit(house, hitPart)
     lastHitTime[player] = now
     
     houseHealth[house] = (houseHealth[house] or 100) - DAMAGE_PER_HIT
-    print("[House] " .. player.Name .. " đánh nhà - Còn " .. houseHealth[house] .. " HP")
     
     -- Hiệu ứng rung
     for _, part in ipairs(house:GetChildren()) do
@@ -308,7 +301,6 @@ local function createDestructibleHouse(position)
     end
     
     table.insert(activeHouses, houseModel)
-    print("[House] Đã tạo nhà tại: " .. tostring(position))
     
     return houseModel
 end
@@ -417,14 +409,12 @@ local function fillQueueWithBots(mode, neededBots, targetRankInfo)
 	
 	-- Nếu đã đủ player thật, KHÔNG spawn bot
 	if realPlayerCount >= playersNeeded[mode] then
-		print(string.format("[Matchmaking] fillQueueWithBots: Đã có %d player thật, KHÔNG spawn bot!", realPlayerCount))
 		return false
 	end
 	-- ==================================================
 	
 	-- Kiểm tra rank có cho phép bot không
 	if not canUseBots(targetRankInfo) then
-		print(string.format("[Matchmaking] Rank %s không cho phép bot - phải chờ player thật!", targetRankInfo.displayName))
 		return false
 	end
 	
@@ -434,8 +424,6 @@ local function fillQueueWithBots(mode, neededBots, targetRankInfo)
 		return false
 	end
 	
-	print(string.format("[Matchmaking] BotManager đã sẵn sàng, đang điền %d bot...", neededBots))
-	print(string.format("[Matchmaking] Đang điền %d bot vào queue %s (rank: %s)", neededBots, mode, targetRankInfo.displayName))
 	-- Tạo bot data cho queue với rank phù hợp
 	local botDataList = {}
 	for i = 1, neededBots do
@@ -477,7 +465,6 @@ local function fillQueueWithBots(mode, neededBots, targetRankInfo)
 		}
 		table.insert(botDataList, botData)
 		table.insert(globalQueues[mode], botData)
-		print(string.format("[Matchmaking] Đã thêm bot: %s (%s)", botName, botDisplayName))
 	end
 	-- KHÔNG broadcast queue update ở đây - sẽ broadcast sau khi match found
 	-- Điều này tránh việc MessagingService handler reset queue trước khi match found logic chạy
@@ -488,13 +475,11 @@ end
 local function checkAndFillBots(mode)
 	local queue = globalQueues[mode]
 	if not queue then 
-		print("[Matchmaking] checkAndFillBots: Queue " .. mode .. " không tồn tại")
 		return 
 	end
 	-- ========== DEBOUNCE CHECK ==========
 	-- Nếu đang fill bot cho mode này, không fill lại
 	if botFillInProgress[mode] then
-		print("[Matchmaking] checkAndFillBots: Bot fill đang chạy cho " .. mode .. ", bỏ qua")
 		return
 	end
 	-- =====================================
@@ -512,16 +497,12 @@ local function checkAndFillBots(mode)
 	
 	-- Nếu đã đủ player thật, KHÔNG spawn bot nhưng VẪN ghép trận
 	if realPlayerCount >= needed then
-		print(string.format("[Matchmaking] Đã có %d player thật, KHÔNG spawn bot!", realPlayerCount))
 		-- KHÔNG return ở đây - để code bên dưới xử lý ghép trận
 	else
-		print(string.format("[Matchmaking] Chỉ có %d player thật (cần %d), có thể spawn bot", realPlayerCount, needed))
 	end
 	-- =============================================
-	print(string.format("[Matchmaking] checkAndFillBots: %s - %d/%d players", mode, current, needed))
 	-- Nếu đã đủ người, kiểm tra ghép trận ngay
 	if current >= needed then
-		print("[Matchmaking] Đủ người! Trigger match found...")
 		-- Trigger match found logic
 		local matchedPlayers = {}
 		local matchedIndices = {}
@@ -551,10 +532,7 @@ local function checkAndFillBots(mode)
 				botPlayers = botPlayers,
 				hasBots = true
 			}
-			print(string.format("[Matchmaking] ĐÃ LƯU %d BOT VÀO CACHE cho match %s", #botPlayers, matchId))
-			print("[Matchmaking] Cache contents:")
 			for mid, data in pairs(matchDataCache) do
-				print(string.format("  %s: hasBots=%s, botCount=%d", mid, tostring(data.hasBots), data.botPlayers and #data.botPlayers or 0))
 			end
 		end
 		
@@ -587,11 +565,9 @@ local function checkAndFillBots(mode)
 			MessagingService:PublishAsync("MatchmakingMatch", matchData)
 		end)
 		
-		print(string.format("[Matchmaking] Đã tạo trận %s với %d players (bots: %s)", mode, #matchedPlayers, tostring(hasBots)))
 		
 		-- Thông báo cho real players trong local queue
 		for _, player in ipairs(localQueues[mode]) do
-			print("[Matchmaking] Gửi MatchFound cho " .. player.Name)
 			MatchFound:FireClient(player, {
 				mode = mode,
 				players = getMatchPlayerNames(matchedPlayers),
@@ -629,11 +605,9 @@ local function checkAndFillBots(mode)
 			if waitTime >= BOT_FILL_TIMEOUT then
 				-- ========== SET DEBOUNCE FLAG ==========
 				botFillInProgress[mode] = true
-				print("[Matchmaking] Setting botFillInProgress[" .. mode .. "] = true")
 				-- Clear sau khi match found hoặc timeout
 				task.delay(BOT_FILL_COOLDOWN, function()
 					botFillInProgress[mode] = nil
-					print("[Matchmaking] Cleared botFillInProgress[" .. mode .. "]")
 				end)
 				-- ========================================
 				
@@ -654,14 +628,12 @@ local function checkAndFillBots(mode)
 				
 				if not canUseBot then
 					-- Rank cao không có bot, tiếp tục chờ
-					print(string.format("[Matchmaking] %s rank - không có bot, tiếp tục chờ player thật...", targetRankInfo.displayName))
 					botFillInProgress[mode] = nil -- Clear flag
 					return
 				end
 				
 				-- KIỂM TRA BotManager TRƯỚC KHI GỌI
 				local BotManager = _G.BotManager
-				print(string.format("[Matchmaking] BotManager check: %s", tostring(BotManager)))
 				
 				if not BotManager then
 					warn("[Matchmaking] BotManager KHÔNG KHẢ DỤNG! Không thể spawn bot!")
@@ -670,22 +642,13 @@ local function checkAndFillBots(mode)
 				end
 				
 				local neededBots = needed - current
-				print(string.format("[Matchmaking] TIMEOUT! Cần %d bot cho queue %s (hiện có %d/%d)", neededBots, mode, current, needed))
 				local success, botDataList = fillQueueWithBots(mode, neededBots, targetRankInfo)
 				print(string.format("[Matchmaking] fillQueueWithBots result: success=%s, botCount=%d", 
 					tostring(success), botDataList and #botDataList or 0))
-				print("[Matchmaking] DEBUG: About to check if success...")
 				if success then
-					print("[Matchmaking] DEBUG: Inside success block!")
 					-- SAU KHI THÊM BOT, KIỂM TRA XEM ĐÃ ĐỦ NGƯỜI CHƯA
-					print("[Matchmaking] Bot added! Queue now: " .. #globalQueues[mode] .. "/" .. playersNeeded[mode])
-					print("[Matchmaking] DEBUG: Checking if queue is full...")
-					print("[Matchmaking] DEBUG: globalQueues[mode] count = " .. #globalQueues[mode])
-					print("[Matchmaking] DEBUG: playersNeeded[mode] = " .. playersNeeded[mode])
 					
 					if #globalQueues[mode] >= playersNeeded[mode] then
-						print("[Matchmaking] DEBUG: Condition met! Starting match...")
-						print("[Matchmaking] ĐỦ PLAYERS SAU KHI THÊM BOT! Ghép trận...")
 						
 						-- Trigger match found
 						local matchPlayers = {}
@@ -715,7 +678,6 @@ local function checkAndFillBots(mode)
 							botPlayers = botPlayers,
 							hasBots = true
 						}
-						print(string.format("[Matchmaking] Đã lưu %d bot vào cache cho match %s", #botPlayers, matchId))
 						-- Broadcast match found (compact data)
 						local matchData = {
 							action = "matchFound",
@@ -729,11 +691,9 @@ local function checkAndFillBots(mode)
 							MessagingService:PublishAsync("MatchmakingMatch", matchData)
 						end)
 						if success2 then
-							print(string.format("[Matchmaking] Đã tạo trận %s với bot (timeout)", mode))
 							
 							-- Thông báo cho real players trong local queue
 							for _, player in ipairs(localQueues[mode]) do
-								print("[Matchmaking] Gửi MatchFound cho " .. player.Name)
 								MatchFound:FireClient(player, {
 									mode = mode,
 									players = getMatchPlayerNames(matchPlayers),
@@ -748,7 +708,6 @@ local function checkAndFillBots(mode)
 								for _, mp in ipairs(matchPlayers) do
 									if mp.Name == playerName then
 										table.remove(localQueues[mode], i)
-										print("[Matchmaking] Đã xóa " .. playerName .. " khỏi local queue")
 										break
 									end
 								end
@@ -768,7 +727,6 @@ end
 -- Loop kiểm tra timeout và điền bot
 -- SỬA: Kiểm tra globalQueues thay vì localQueues để đảm bảo bot check chạy đúng cho tất cả chế độ
 task.spawn(function()
-	print("[Matchmaking] Bot fill loop đã bắt đầu!")
 	local loopCount = 0
 	while true do
 		task.wait(2) -- Kiểm tra mỗi 2 giây (nhanh hơn nữa)
@@ -776,12 +734,10 @@ task.spawn(function()
 		
 		-- Debug: In ra loop count mỗi 5 lần (10 giây)
 		if loopCount % 5 == 0 then
-			print("[Matchmaking] Loop running... (count: " .. loopCount .. ")")
 		end
 		for mode, _ in pairs(globalQueues) do
 			-- Kiểm tra global queue có players không (để fill bot hoặc ghép trận)
 			if #globalQueues[mode] > 0 then
-				print("[Matchmaking] Periodic check: " .. mode .. " - " .. #globalQueues[mode] .. " players")
 				checkAndFillBots(mode)
 			end
 			
@@ -800,7 +756,6 @@ task.spawn(function()
 				
 				-- Xóa players đã timeout
 				for _, player in ipairs(playersToRemove) do
-					print("[Matchmaking] " .. player.Name .. " đã hết thời gian chờ (60s)")
 					
 					-- Thông báo cho player
 					QueueStatus:FireClient(player, {
@@ -827,14 +782,12 @@ local function addToQueue(player, mode)
 	if IsPlayerInMatch then
 		local inMatch, matchId, matchData = IsPlayerInMatch(player)
 		if inMatch then
-			print("[Matchmaking] " .. player.Name .. " đang trong trận " .. matchId .. " - không thể join queue")
 			return false, "Bạn đang trong trận đấu! Hãy thoát trận trước khi tìm trận mới."
 		end
 	else
 		-- Fallback: Kiểm tra team của player
 		local playerTeam = player.Team
 		if playerTeam and (playerTeam.Name == "Team1" or playerTeam.Name == "Team2") then
-			print("[Matchmaking] " .. player.Name .. " đang ở team " .. playerTeam.Name .. " - có thể đang trong trận")
 			return false, "Bạn đang trong trận đấu! Hãy thoát trận trước khi tìm trận mới."
 		end
 	end
@@ -877,7 +830,6 @@ local function addToQueue(player, mode)
 	
 	print(string.format("[Matchmaking] %s đã join queue %s | Rank: %s (value: %d)", 
 		player.Name, mode, rankInfo.displayName, rankValue))
-	print("[Matchmaking] Queue " .. mode .. ": " .. #globalQueues[mode] .. "/" .. playersNeeded[mode] .. " (cross-server)")
 	
 	-- Broadcast queue update đến tất cả server
 	broadcastQueueUpdate(mode)
@@ -934,21 +886,15 @@ local function addToQueue(player, mode)
 	end
 	
 	-- Kiểm tra đủ người để ghép trận
-	print("[Matchmaking] === CHECKING MATCH ===")
-	print("[Matchmaking] Queue " .. mode .. ": " .. #globalQueues[mode] .. " players")
-	print("[Matchmaking] Players needed: " .. playersNeeded[mode])
 	
 	-- Debug: In rank của tất cả players trong queue
-	print("[Matchmaking] === RANK DEBUG ===")
 	for i, p in ipairs(globalQueues[mode]) do
 		print(string.format("  %d. %s - Rank: %s (index: %d, tier: %d, value: %d)", 
 			i, p.Name, p.RankDisplayName or "Unknown", p.RankIndex or 0, p.RankTier or 0, p.RankValue or 0))
 	end
-	print("[Matchmaking] === END RANK DEBUG ===")
 	
 	-- SỬA: Kiểm tra đủ players TRƯỚC, không cần rank matching
 	if #globalQueues[mode] >= playersNeeded[mode] then
-		print("[Matchmaking] ĐỦ PLAYERS! Ghép trận ngay...")
 		matchedPlayers = {}
 		matchedIndices = {}
 		for i = 1, playersNeeded[mode] do
@@ -959,21 +905,16 @@ local function addToQueue(player, mode)
 		-- Nếu chưa đủ, thử tìm theo rank
 		matchedPlayers, matchedIndices = findMatchingPlayers()
 		if matchedPlayers then
-			print("[Matchmaking] Found " .. #matchedPlayers .. " matching players by rank")
 		else
-			print("[Matchmaking] Not enough players (" .. #globalQueues[mode] .. "/" .. playersNeeded[mode] .. ")")
 		end
 	end
 	
 	if matchedPlayers and #matchedPlayers >= playersNeeded[mode] then
-		print("[Matchmaking] === MATCH FOUND ===")
-		print("[Matchmaking] matchedPlayers count: " .. #matchedPlayers)
 		
 		-- Lấy danh sách players cho trận đấu
 		local matchPlayers = {}
 		local botPlayers = {} -- Lưu thông tin bot để spawn sau
 		for i = 1, math.min(playersNeeded[mode], #matchedPlayers) do
-			print("[Matchmaking] Adding player " .. i .. ": " .. matchedPlayers[i].Name)
 			table.insert(matchPlayers, matchedPlayers[i])
 			-- Lưu bot info
 			if matchedPlayers[i].isBot then
@@ -981,7 +922,6 @@ local function addToQueue(player, mode)
 			end
 		end
 		
-		print("[Matchmaking] matchPlayers count: " .. #matchPlayers)
 		
 		-- Xóa players đã match khỏi queue (từ cuối đến đầu để không bị sai index)
 		table.sort(matchedIndices, function(a, b) return a > b end)
@@ -1004,7 +944,6 @@ local function addToQueue(player, mode)
 				botPlayers = botPlayers,
 				hasBots = true
 			}
-			print(string.format("[Matchmaking] Đã lưu %d bot vào cache cho match %s", #botPlayers, matchId))
 		end
 		
 		-- Broadcast match found (compact data to avoid 1KB limit)
@@ -1036,7 +975,6 @@ local function addToQueue(player, mode)
 			for _, p in ipairs(matchPlayers) do
 				table.insert(playerNames, p.Name .. " (" .. (p.RankDisplayName or "Sắt 3") .. ")")
 			end
-			print("[Matchmaking] Đã tìm thấy trận " .. mode .. ": " .. table.concat(playerNames, ", "))
 			
 			-- SỬA: Thông báo trực tiếp cho players trong local queue
 			for _, player in ipairs(localQueues[mode]) do
@@ -1050,7 +988,6 @@ local function addToQueue(player, mode)
 				end
 				
 				if inMatch then
-					print("[Matchmaking] Gửi MatchFound cho " .. player.Name)
 					MatchFound:FireClient(player, {
 						mode = mode,
 						players = getMatchPlayerNames(matchPlayers),
@@ -1065,7 +1002,6 @@ local function addToQueue(player, mode)
 				for i = #localQueues[mode], 1, -1 do
 					if localQueues[mode][i].Name == mp.Name then
 						table.remove(localQueues[mode], i)
-						print("[Matchmaking] Đã xóa " .. mp.Name .. " khỏi local queue")
 						break
 					end
 				end
@@ -1084,7 +1020,6 @@ local function removeFromQueue(player)
 		for i, p in ipairs(queue) do
 			if p == player then
 				table.remove(queue, i)
-				print("[Matchmaking] " .. player.Name .. " đã rời queue " .. mode)
 				
 				-- Xóa từ global queue
 				for j, playerData in ipairs(globalQueues[mode]) do
@@ -1114,13 +1049,9 @@ MessagingService:SubscribeAsync("MatchmakingQueue", function(message)
 			-- Điều này tránh race condition khi broadcast từ chính server này
 			-- globalQueues[data.mode] = data.players
 			
-			print("[Matchmaking] === CROSS-SERVER QUEUE UPDATE ===")
-			print(string.format("[Matchmaking] Mode: %s | Players: %d/%d", data.mode, data.count, data.needed))
 			
 			if data.players then
-				print("[Matchmaking] Players in queue:")
 				for i, p in ipairs(data.players) do
-					print(string.format("  %d. %s (%s) - isBot: %s", i, p.Name, p.RankDisplayName or "Unknown", tostring(p.isBot)))
 				end
 			end
 			
@@ -1138,13 +1069,10 @@ MessagingService:SubscribeAsync("MatchmakingQueue", function(message)
 			
 			-- KIỂM TRA BOT FILL - sử dụng globalQueues local thay vì data.players
 			-- Điều này đảm bảo bot fill chạy đúng
-			print("[Matchmaking] DEBUG: globalQueues[" .. data.mode .. "] count = " .. #globalQueues[data.mode])
 			if #globalQueues[data.mode] > 0 then
-				print("[Matchmaking] Kiểm tra bot fill sau khi nhận queue update...")
 				checkAndFillBots(data.mode)
 			end
 			
-			print("[Matchmaking] === END CROSS-SERVER QUEUE UPDATE ===")
 		end
 	end)
 	
@@ -1156,8 +1084,6 @@ end)
 MessagingService:SubscribeAsync("MatchmakingMatch", function(message)
 	local data = message.Data
 	if data.action == "matchFound" then
-		print("[Matchmaking] === CROSS-SERVER MATCH FOUND ===")
-		print(string.format("[Matchmaking] Mode: %s | Match ID: %s | Has Bots: %s", data.mode, data.matchId, tostring(data.hasBots)))
 		
 		-- Xóa players đã match khỏi global queue (đồng bộ giữa các server)
 		local removedCount = 0
@@ -1166,13 +1092,11 @@ MessagingService:SubscribeAsync("MatchmakingMatch", function(message)
 				if globalQueues[data.mode][i].Name == playerData.Name then
 					table.remove(globalQueues[data.mode], i)
 					removedCount = removedCount + 1
-					print(string.format("[Matchmaking] Đã xóa %s khỏi global queue", playerData.Name))
 					break
 				end
 			end
 		end
 		
-		print(string.format("[Matchmaking] Đã xóa %d players khỏi global queue", removedCount))
 		
 		-- Kiểm tra xem có player nào trong local queue thuộc match không
 		for _, playerData in ipairs(data.players) do
@@ -1189,7 +1113,6 @@ MessagingService:SubscribeAsync("MatchmakingMatch", function(message)
 					
 					-- Xóa khỏi local queue
 					table.remove(localQueues[data.mode], i)
-					print(string.format("[Matchmaking] Đã thông báo match cho %s", player.Name))
 					break
 				end
 			end
@@ -1198,16 +1121,11 @@ MessagingService:SubscribeAsync("MatchmakingMatch", function(message)
 		-- Broadcast queue update sau khi xóa players
 		broadcastQueueUpdate(data.mode)
 		
-		print("[Matchmaking] === END CROSS-SERVER MATCH FOUND ===")
 	end
 end)
 -- Xử lý khi player join queue
 JoinQueue.OnServerEvent:Connect(function(player, mode)
 	-- ========== DEBUG: Log exactly what we receive ==========
-	print("[Matchmaking] Received from " .. player.Name .. ":")
-	print("  - Type: " .. type(mode))
-	print("  - Value: '" .. tostring(mode) .. "'")
-	print("  - Length: " .. tostring(#tostring(mode)))
 	
 	-- ========== SECURITY: Rate limiting & validation ==========
 	local Security = _G.Security
@@ -1215,7 +1133,6 @@ JoinQueue.OnServerEvent:Connect(function(player, mode)
 		-- Rate limit check
 		local allowed, rateMsg = Security.RateLimiter.Check(player, "JoinQueue")
 		if not allowed then
-			print("[Matchmaking] Rate limited: " .. player.Name .. " - " .. rateMsg)
 			QueueStatus:FireClient(player, {
 				action = "joinResult",
 				success = false,
@@ -1228,7 +1145,6 @@ JoinQueue.OnServerEvent:Connect(function(player, mode)
 		-- Input validation
 		local valid, validatedMode = Security.InputValidator.ValidateMode(mode)
 		if not valid then
-			print("[Matchmaking] Invalid mode: " .. player.Name .. " - " .. tostring(validatedMode))
 			QueueStatus:FireClient(player, {
 				action = "joinResult",
 				success = false,
@@ -1241,7 +1157,6 @@ JoinQueue.OnServerEvent:Connect(function(player, mode)
 		
 		-- Anti-cheat check
 		if Security.AntiCheat.IsSuspicious(player) then
-			print("[Matchmaking] Suspicious player blocked: " .. player.Name)
 			QueueStatus:FireClient(player, {
 				action = "joinResult",
 				success = false,
@@ -1251,7 +1166,6 @@ JoinQueue.OnServerEvent:Connect(function(player, mode)
 			return
 		end
 	else
-		print("[Matchmaking] WARNING: Security not available, skipping validation")
 	end
 	
 	local success, message = addToQueue(player, mode)
@@ -1293,12 +1207,10 @@ _G.TestJoinQueue = function(playerName, mode)
 	end
 	
 	mode = mode or "1v1"
-	print("[TestJoinQueue] Testing join queue for " .. player.Name .. " mode: " .. mode)
 	
 	local success, message = addToQueue(player, mode)
 	return success, message
 end
-print("[MatchmakingService] Test function available: _G.TestJoinQueue(playerName, mode)")
 -- ĐÃ TẮT: Bot không còn tham gia trận đấu
 -- Người chơi sẽ phải chờ đủ số lượng người thật để bắt đầu trận
 -- Vòng lặp thêm bot đã bị vô hiệu hóa
@@ -1317,14 +1229,8 @@ local function waitForStartMatch()
 	return _G.StartMatch ~= nil
 end
 MatchStart.OnServerEvent:Connect(function(player, matchData)
-	print("[Matchmaking] === MATCH START EVENT ===")
-	print("[Matchmaking] " .. player.Name .. " đã vào trận " .. matchData.mode)
-	print("[Matchmaking] matchData.hasBots = " .. tostring(matchData.hasBots))
-	print("[Matchmaking] matchData.players = " .. tostring(matchData.players))
 	if matchData.players then
-		print("[Matchmaking] Players count: " .. #matchData.players)
 		for i, p in ipairs(matchData.players) do
-			print(string.format("  %d. %s", i, tostring(p)))
 		end
 	end
 	
@@ -1339,12 +1245,8 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 	if not pendingMatches[matchId] then
 		-- Lấy thông tin bot từ cache (được lưu khi ghép trận)
 		local cachedMatchData = matchDataCache[matchId]
-		print("[Matchmaking] Cached match data for " .. tostring(matchId) .. ":")
 		if cachedMatchData then
-			print("  hasBots: " .. tostring(cachedMatchData.hasBots))
-			print("  botPlayers: " .. tostring(cachedMatchData.botPlayers and #cachedMatchData.botPlayers or 0))
 		else
-			print("  NOT FOUND in cache!")
 		end
 		
 		pendingMatches[matchId] = {
@@ -1356,11 +1258,9 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 			-- Thêm bot info từ cache
 			botPlayers = cachedMatchData and cachedMatchData.botPlayers or {}
 		}
-		print("[Matchmaking] pendingMatches botPlayers: " .. #pendingMatches[matchId].botPlayers)
 		
 		-- Nếu có bot trong match, tạo bot characters
 		if matchData.hasBots then
-			print("[Matchmaking] Match có bot, sẽ spawn bot khi trận bắt đầu...")
 			
 			-- Đếm số bot cần tạo từ cache hoặc từ player names
 			local botCount = 0
@@ -1374,7 +1274,6 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 				end
 			end
 			
-			print("[Matchmaking] Cần tạo " .. botCount .. " bot characters")
 		end
 	end
 	
@@ -1382,12 +1281,10 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 	table.insert(pendingMatches[matchId].players, player)
 	
 	-- KHÔNG spawn nhà mới - sử dụng 2 base có sẵn (Team1Base và Team2Base)
-	print("[Matchmaking] Sử dụng 2 base có sẵn cho trận đấu")
 	
 	-- Kiểm tra xem tất cả players đã sẵn sàng chưa
 	local playersNeeded = matchData.mode == "1v1" and 2 or matchData.mode == "2v2" and 4 or 6
 	
-	print("[Matchmaking] Players trong match " .. matchId .. ": " .. #pendingMatches[matchId].players .. "/" .. playersNeeded)
 	
 	-- Đếm số bot trong match
 	local botCount = 0
@@ -1400,12 +1297,10 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 	-- Tính tổng số players (real + bots)
 	local totalPlayers = #pendingMatches[matchId].players + botCount
 	
-	print("[Matchmaking] Tổng players (real + bots): " .. totalPlayers .. "/" .. playersNeeded)
 	
 	-- NẾU KHÔNG ĐỦ PLAYERS, TẠO BOT NGAY LẬP TỨC
 	if totalPlayers < playersNeeded then
 		local neededBots = playersNeeded - totalPlayers
-		print("[Matchmaking] KHÔNG ĐỦ PLAYERS! Cần tạo " .. neededBots .. " bot ngay lập tức!")
 		
 		-- Tạo bot data
 		for i = 1, neededBots do
@@ -1413,7 +1308,6 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 			local botName = string.format("[BOT] Shadow%d", i)
 			table.insert(pendingMatches[matchId].playerNames, botName)
 			botCount = botCount + 1
-			print("[Matchmaking] Đã tạo bot: " .. botName)
 		end
 		
 		-- Cập nhật hasBots
@@ -1422,11 +1316,9 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 		
 		-- Cập nhật totalPlayers
 		totalPlayers = #pendingMatches[matchId].players + botCount
-		print("[Matchmaking] Sau khi tạo bot: " .. totalPlayers .. "/" .. playersNeeded)
 	end
 	
 	if totalPlayers >= playersNeeded then
-		print("[Matchmaking] Đủ players! Bắt đầu chia team...")
 		
 		-- Tạo danh sách tất cả players (real + bot data)
 		local allPlayersList = {}
@@ -1439,7 +1331,6 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 				userId = p.UserId,
 				isBot = false
 			})
-			print("[Matchmaking] Added real player: " .. p.Name .. " (userId: " .. tostring(p.UserId) .. ")")
 		end
 		
 		-- Thêm bot data từ cache (nếu có) hoặc từ player names
@@ -1452,7 +1343,6 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 					isBot = true,
 					rankInfo = botInfo.RankDisplayName
 				})
-				print(string.format("[Matchmaking] Thêm bot từ cache: %s", botInfo.Name))
 			end
 		else
 			-- Fallback: sử dụng player names
@@ -1463,7 +1353,6 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 						userId = 9000000 + #allPlayersList,
 						isBot = true
 					})
-					print(string.format("[Matchmaking] Thêm bot từ playerNames: %s", playerName))
 				end
 			end
 		end
@@ -1489,15 +1378,11 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 			
 			if i % 2 == 1 then
 				table.insert(team1, playerData)
-				print("[Matchmaking] " .. p.name .. " -> Team 1" .. (p.isBot and " (BOT)" or ""))
 			else
 				table.insert(team2, playerData)
-				print("[Matchmaking] " .. p.name .. " -> Team 2" .. (p.isBot and " (BOT)" or ""))
 			end
 		end
 		
-		print("[Matchmaking] Team 1: " .. #team1 .. " players")
-		print("[Matchmaking] Team 2: " .. #team2 .. " players")
 		
 		-- Debug: Log chi tiết từng team
 		local team1Bots = 0
@@ -1508,16 +1393,11 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 		for _, p in ipairs(team2) do
 			if p.isBot then team2Bots = team2Bots + 1 end
 		end
-		print(string.format("[Matchmaking] Team 1: %d bots, Team 2: %d bots", team1Bots, team2Bots))
 		
 		-- Spawn bot characters nếu có
 		if matchData.hasBots then
-			print("[Matchmaking] === BOT SPAWN DEBUG ===")
-			print("[Matchmaking] matchData.hasBots = " .. tostring(matchData.hasBots))
-			print("[Matchmaking] allPlayersList count = " .. #allPlayersList)
 			
 			local BotManager = _G.BotManager
-			print("[Matchmaking] BotManager = " .. tostring(BotManager))
 			
 			if BotManager then
 				-- Đếm số bot cần spawn
@@ -1525,11 +1405,9 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 				for i, playerData in ipairs(allPlayersList) do
 					if playerData.isBot then
 						botCount = botCount + 1
-						print(string.format("[Matchmaking] Bot %d: %s (index %d)", botCount, playerData.name, i))
 					end
 				end
 				
-				print("[Matchmaking] Tổng số bot cần spawn: " .. botCount)
 				
 				-- Spawn bots cho mỗi team - SỬA: Spawn gần arena spawn points
 				local team1BotCount = 0
@@ -1569,9 +1447,7 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 										
 						team1BotCount = team1BotCount + 1
 						team1SpawnIndex = team1SpawnIndex + 1
-						print(string.format("[Matchmaking] Đang spawn bot %s cho %s tại base %d", playerData.name, teamName, spawnIndex))
 						local botData = BotManager.SpawnBotForTeam(teamName, spawnPos, matchData.mode)
-						print(string.format("[Matchmaking] Đã spawn bot: %s", botData and botData.name or "FAILED"))
 					end
 				end
 				
@@ -1585,17 +1461,13 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 						local spawnPos = baseSpawnPos + Vector3.new(math.random(-3, 3), 0, math.random(-3, 3))						
 						team2BotCount = team2BotCount + 1
 						team2SpawnIndex = team2SpawnIndex + 1
-						print(string.format("[Matchmaking] Đang spawn bot %s cho %s tại base %d", playerData.name, teamName, spawnIndex))
 						local botData = BotManager.SpawnBotForTeam(teamName, spawnPos, matchData.mode)
-						print(string.format("[Matchmaking] Đã spawn bot: %s", botData and botData.name or "FAILED"))
 					end
 				end
 				
-				print(string.format("[Matchmaking] Đã spawn %d bot cho Team1, %d bot cho Team2", team1BotCount, team2BotCount))
 			else
 				warn("[Matchmaking] BotManager KHÔNG KHẢ DỤNG để spawn bots! _G.BotManager = " .. tostring(_G.BotManager))
 			end
-			print("[Matchmaking] === END BOT SPAWN DEBUG ===")
 		end
 		
 		-- Tạo danh sách player IDs (chỉ real players)
@@ -1643,19 +1515,8 @@ MatchStart.OnServerEvent:Connect(function(player, matchData)
 			team2 = team2,
 			allPlayers = allPlayers
 		})
-		print("[Matchmaking] Đã gọi StartMatch cho " .. matchId .. " với " .. #team1 .. " vs " .. #team2 .. " players")
 		
 		-- Xóa match khỏi pending
 		pendingMatches[matchId] = nil
 	end
 end)
-print("[MatchmakingService] Đã khởi động!")
-print("[MatchmakingService] Hỗ trợ: 1v1 (2 players), 2v2 (4 players), 3v3 (6 players)")
-print("[MatchmakingService] Thời gian chờ tối đa: " .. QUEUE_TIMEOUT .. " giây")
-print("[MatchmakingService] Thời gian chờ bot fill: " .. BOT_FILL_TIMEOUT .. " giây")
-print("[MatchmakingService] Ghép trận LIÊN SERVER đã kích hoạt!")
-print("[MatchmakingService] ========== RANK MATCHMAKING ==========")
-print("[MatchmakingService] Ghép trận theo rank: ±1 tier")
-print("[MatchmakingService] Rank có bot: Sắt -> Bạch Kim")
-print("[MatchmakingService] Rank KHÔNG có bot: Kim Cương, Cao Thủ, Thách Đấu")
-print("[MatchmakingService] ======================================")

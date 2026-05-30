@@ -3,8 +3,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-print("[BotManager2v2] ========== VERSION 2024-01-15-V4 LOADED ==========")
-print("[BotManager2v2] Khoi dong...")
 
 local CONFIG = {
 	DETECTION_RANGE = 85,
@@ -392,7 +390,6 @@ local function attack(botData, target)
 		local tname = target.instance.Name
 		local defTeam = string.find(tname, "Team1", 1, true) and "Team1" or "Team2"
 		_G.BotAttackBase(target.instance, defTeam, botData.name, botData.team, CONFIG.BASE_ATTACK_DAMAGE)
-		print(string.format("[BotManager2v2] %s: Dealt %d damage to base %s", botData.name, CONFIG.BASE_ATTACK_DAMAGE, tname))
 	end
 end
 
@@ -483,10 +480,8 @@ local function updateAI(botData)
 		if base.distance <= CONFIG.BASE_ATTACK_RANGE then
 			botData.state = "attacking_base"
 			attack(botData, base)
-			print(string.format("[BotManager2v2] %s dang DANH BASE %s (dist=%.1f)", botData.name, base.instance.Name, base.distance))
 		else
 			moveTo(botData, approachPointToward(base, hrp))
-			print(string.format("[BotManager2v2] %s dang DI CHUYEN DEN BASE %s (dist=%.1f)", botData.name, base.instance.Name, base.distance))
 		end
 		return
 	end
@@ -558,7 +553,6 @@ local function updateAI(botData)
 			end
 
 			moveTo(botData, approachPos)
-			print(string.format("[BotManager2v2] %s dang DI CHUYEN DEN BASE DICH %s", botData.name, enemyBase.Name))
 		else
 			botData.state = "patrolling"
 			if not botData.patrolTarget or tick() - botData.lastPatrol > 3 then
@@ -651,10 +645,8 @@ local function spawnBot(teamName, spawnPos)
 
 	if _G.MVPSystem and _G.MVPSystem.InitPlayerStats then
 		_G.MVPSystem.InitPlayerStats(name, teamName)
-		print(string.format("[BotManager2v2] Da khoi tao MVP stats cho bot: %s (Team: %s)", name, teamName))
 	end
 
-	print(string.format("[BotManager2v2] Spawned: %s (Team: %s)", name, teamName))
 	return botData
 end
 
@@ -710,6 +702,5 @@ RunService.Heartbeat:Connect(function(deltaTime)
 end)
 
 _G.BotManager2v2 = BotManager2v2
-print("[BotManager2v2] ========== SAN SANG ==========")
 
 return BotManager2v2

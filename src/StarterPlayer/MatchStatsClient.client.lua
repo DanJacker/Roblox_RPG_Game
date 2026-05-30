@@ -104,7 +104,6 @@ end
 -- Khi trận đấu bắt đầu
 if MatchStart then
 	MatchStart.OnClientEvent:Connect(function(matchData)
-		print("[MatchStatsClient] Trận đấu bắt đầu!")
 		mainFrame.Visible = true
 		
 		-- Reset thống kê
@@ -133,7 +132,6 @@ end
 -- Khi trận đấu kết thúc
 if MatchEnded then
 	MatchEnded.OnClientEvent:Connect(function(resultData)
-		print("[MatchStatsClient] Trận đấu kết thúc!")
 		
 		-- Hiển thị kết quả cuối cùng
 		if resultData.stats then
@@ -159,4 +157,3 @@ if MatchEnded then
 	end)
 end
 
-print("[MatchStatsClient] Đã khởi động thành công!")

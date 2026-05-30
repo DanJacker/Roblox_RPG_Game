@@ -2,7 +2,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("[WinConditionChecker] Đang khởi động...")
 
 -- Lưu trữ thông tin match hiện tại
 local currentMatch = nil
@@ -49,7 +48,6 @@ local function checkWinCondition()
 	
 	-- Nếu Team1 hết base
 	if not team1HasBases then
-		print("[WinConditionChecker] Team2 thắng! Team1 đã mất hết base.")
 		
 		-- Thông báo cho tất cả players
 		for _, player in ipairs(Players:GetPlayers()) do
@@ -72,7 +70,6 @@ local function checkWinCondition()
 	
 	-- Nếu Team2 hết base
 	if not team2HasBases then
-		print("[WinConditionChecker] Team1 thắng! Team2 đã mất hết base.")
 		
 		-- Thông báo cho tất cả players
 		for _, player in ipairs(Players:GetPlayers()) do
@@ -109,7 +106,6 @@ end
 -- Khởi tạo match
 local function initializeMatch(matchData)
 	currentMatch = matchData
-	print("[WinConditionChecker] Đã khởi tạo match: " .. matchData.matchId)
 end
 
 -- Public API
@@ -129,6 +125,5 @@ _G.WinConditionChecker = WinConditionChecker
 -- Khởi tạo
 setupBaseDestructionListener()
 
-print("[WinConditionChecker] Đã khởi động thành công!")
 
 return WinConditionChecker

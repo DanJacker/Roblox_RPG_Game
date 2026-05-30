@@ -11,7 +11,6 @@ if not PlayerGui then
     return
 end
 
-print("[SwordMenuClient] PlayerGui đã sẵn sàng")
 
 -- RemoteEvents
 local remoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
@@ -32,7 +31,6 @@ if not JoinQueue or not LeaveQueue or not MatchFound or not QueueStatus or not M
     return
 end
 
-print("[SwordMenuClient] RemoteEvents đã sẵn sàng")
 
 -- Đợi GUI load
 local swordMenuGui = PlayerGui:WaitForChild("SwordMenuGui", 10)
@@ -49,7 +47,6 @@ if not swordButton or not menuFrame then
     return
 end
 
-print("[SwordMenuClient] GUI đã sẵn sàng")
 
 -- Lấy các button trong menu
 local button1v1 = menuFrame:WaitForChild("Button1v1")
@@ -75,7 +72,6 @@ local cancelButton = queueStatusFrame:WaitForChild("CancelButton")
 
 -- Hàm ẩn/hiện SwordMenu GUI
 local function hideSwordMenu()
-	print("[SwordMenuClient] Hiding SwordMenu GUI (in match)")
 	isInMatch = true
 	swordButton.Visible = false
 	menuFrame.Visible = false
@@ -84,7 +80,6 @@ local function hideSwordMenu()
 end
 
 local function showSwordMenu()
-	print("[SwordMenuClient] Showing SwordMenu GUI (back to lobby)")
 	isInMatch = false
 	swordButton.Visible = true
 end
@@ -93,14 +88,11 @@ end
 local function toggleMenu()
 	-- Không cho phép mở menu khi đang trong trận
 	if isInMatch then
-		print("[SwordMenuClient] Cannot toggle menu - player is in match")
 		return
 	end
 	
-	print("[SwordMenuClient] toggleMenu được gọi, isMenuOpen = " .. tostring(isMenuOpen))
 	isMenuOpen = not isMenuOpen
 	menuFrame.Visible = isMenuOpen
-	print("[SwordMenuClient] MenuFrame.Visible = " .. tostring(menuFrame.Visible))
 	
 	if isMenuOpen then
 		swordButton.BackgroundColor3 = Color3.fromRGB(100, 100, 150)
@@ -136,11 +128,9 @@ end
 
 -- Xử lý click vào nút kiếm
 swordButton.MouseButton1Click:Connect(function()
-    print("[SwordMenuClient] SwordButton được click!")
     toggleMenu()
 end)
 
-print("[SwordMenuClient] Đã kết nối SwordButton click handler")
 
 -- Phím tắt để test: Nhấn J để join 1v1 queue
 local UserInputService = game:GetService("UserInputService")
@@ -149,21 +139,18 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     
     if input.KeyCode == Enum.KeyCode.J then
         -- Join 1v1 queue
-        print("[SwordMenuClient] Phím J được nhấn - Join 1v1 queue")
         currentQueue = "1v1"
         JoinQueue:FireServer("1v1")
         menuFrame.Visible = false
         isMenuOpen = false
     elseif input.KeyCode == Enum.KeyCode.K then
         -- Join 2v2 queue
-        print("[SwordMenuClient] Phím K được nhấn - Join 2v2 queue")
         currentQueue = "2v2"
         JoinQueue:FireServer("2v2")
         menuFrame.Visible = false
         isMenuOpen = false
     elseif input.KeyCode == Enum.KeyCode.L then
         -- Join 3v3 queue
-        print("[SwordMenuClient] Phím L được nhấn - Join 3v3 queue")
         currentQueue = "3v3"
         JoinQueue:FireServer("3v3")
         menuFrame.Visible = false
@@ -173,21 +160,18 @@ end)
 
 -- Xử lý chọn chế độ chơi
 button1v1.MouseButton1Click:Connect(function()
-	print("Đã chọn chế độ 1v1")
 	currentQueue = "1v1"
 	JoinQueue:FireServer("1v1")
 	toggleMenu()
 end)
 
 button2v2.MouseButton1Click:Connect(function()
-	print("Đã chọn chế độ 2v2")
 	currentQueue = "2v2"
 	JoinQueue:FireServer("2v2")
 	toggleMenu()
 end)
 
 button3v3.MouseButton1Click:Connect(function()
-	print("Đã chọn chế độ 3v3")
 	currentQueue = "3v3"
 	JoinQueue:FireServer("3v3")
 	toggleMenu()
@@ -200,15 +184,12 @@ cancelButton.MouseButton1Click:Connect(function()
 	currentQueue = nil
 	queueJoinTime = nil
 	isTimerRunning = false
-	print("Đã hủy tìm trận")
 end)
 
 -- Lắng nghe cập nhật queue
 QueueStatus.OnClientEvent:Connect(function(data)
-    print("[SwordMenuClient] QueueStatus event received: " .. tostring(data.action))
 	if data.action == "joinResult" then
 		if data.success then
-			print("✅ " .. data.message)
 			-- Sử dụng thời gian local của client, không phải từ server
 			queueJoinTime = time()
 			queueTimeout = data.timeout or 60
@@ -249,21 +230,17 @@ QueueStatus.OnClientEvent:Connect(function(data)
 				playersListLabel.Text = "👤 " .. Players.LocalPlayer.Name
 			end
 		else
-			print("❌ " .. data.message)
 			currentQueue = nil
 		end
 	elseif data.action == "leaveResult" then
 		if data.success then
-			print("✅ " .. data.message)
 			currentQueue = nil
 			queueJoinTime = nil
 			queueStatusFrame.Visible = false
 			isTimerRunning = false
 		else
-			print("❌ " .. data.message)
 		end
 	elseif data.action == "timeout" then
-		print("⏰ " .. data.message)
 		queueStatusFrame.Visible = true
 		timerLabel.Text = "⏱️ Hết thời gian!"
 		timerLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
@@ -276,8 +253,6 @@ QueueStatus.OnClientEvent:Connect(function(data)
 			isTimerRunning = false
 		end)
 	else
-		print("[Queue " .. data.mode .. "] " .. data.count .. "/" .. data.needed .. " players")
-		print("Players in queue: " .. table.concat(data.players, ", "))
 		
 		-- Sử dụng thời gian local của client
 		if not queueJoinTime then
@@ -315,14 +290,8 @@ end)
 
 -- Lắng nghe khi tìm thấy trận
 MatchFound.OnClientEvent:Connect(function(data)
-    print("[SwordMenuClient] MatchFound event received!")
-	print("🎉 Tìm thấy trận " .. data.mode .. "!")
-	print("Players: " .. table.concat(data.players, ", "))
-	print("Match ID: " .. tostring(data.matchId))
-	print("Has Bots: " .. tostring(data.hasBots))
 	
 	if data.hasBots then
-		print("🤖 Trận đấu có bot AI!")
 		-- Đếm số bot trong players list
 		local botCount = 0
 		for _, playerName in ipairs(data.players) do
@@ -330,7 +299,6 @@ MatchFound.OnClientEvent:Connect(function(data)
 				botCount = botCount + 1
 			end
 		end
-		print(string.format("🤖 Số bot trong trận: %d", botCount))
 	end
 	
 	currentQueue = nil
@@ -349,18 +317,14 @@ MatchFound.OnClientEvent:Connect(function(data)
 		hasBots = data.hasBots or false
 	})
 	
-	print("🏠 Đã yêu cầu spawn nhà cho trận đấu!")
 end)
 
 -- Lắng nghe khi trận đấu kết thúc
 MatchEnded.OnClientEvent:Connect(function(data)
-	print("[SwordMenuClient] MatchEnded event received!")
-	print("Match ended: " .. tostring(data.reason))
 	
 	-- Hiện lại SwordMenu GUI khi thoát trận
 	task.delay(6, function()
 		showSwordMenu()
-		print("[SwordMenuClient] SwordMenu GUI shown after match ended")
 	end)
 end)
 
@@ -369,7 +333,6 @@ player:GetPropertyChangedSignal("Team"):Connect(function()
 	local team = player.Team
 	if team then
 		local teamName = team.Name
-		print("[SwordMenuClient] Team changed to: " .. teamName)
 		
 		if teamName == "Team1" or teamName == "Team2" then
 			-- Player vào team trận đấu -> ẩn GUI
@@ -384,7 +347,6 @@ player:GetPropertyChangedSignal("Team"):Connect(function()
 		end
 	else
 		-- Player không có team (có thể đang loading)
-		print("[SwordMenuClient] Player has no team")
 	end
 end)
 
@@ -393,14 +355,10 @@ local currentTeam = player.Team
 if currentTeam then
 	if currentTeam.Name == "Team1" or currentTeam.Name == "Team2" then
 		hideSwordMenu()
-		print("[SwordMenuClient] Player is already in a match team, hiding GUI")
 	elseif currentTeam.Name == "Lobby" then
 		showSwordMenu()
-		print("[SwordMenuClient] Player is in lobby, showing GUI")
 	end
 else
 	showSwordMenu()
-	print("[SwordMenuClient] Player has no team, showing GUI")
 end
 
-print("[SwordMenuClient] Đã tải xong!")

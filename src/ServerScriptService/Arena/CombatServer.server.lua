@@ -1,4 +1,3 @@
-print("[CombatServer] Script starting...")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -41,7 +40,6 @@ local function onCombatRequest(player, target, damage)
     
     -- Ngăn đánh cùng team
     if attackerTeam and targetTeam and attackerTeam == targetTeam then
-        print("[CombatServer] BLOCKED friendly fire: " .. player.Name .. " tried to hit " .. tostring(target.Name))
         return
     end
     -- ===========================================================
@@ -79,7 +77,6 @@ combatRemote.OnServerEvent:Connect(function(player, target, damage)
 	onCombatRequest(player, target, damage)
 end)
 
-print("[CombatServer] Loaded!")print("[CombatServer] Script starting...")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -93,19 +90,15 @@ local DAMAGE_MULTIPLIERS = {
 }
 -- ========================================================
 
-print("[CombatServer] Services loaded")
 
 -- Ensure CombatRemote exists
 local combatRemote = ReplicatedStorage:FindFirstChild("CombatRemote")
-print("[CombatServer] Looking for CombatRemote: " .. tostring(combatRemote))
 
 if not combatRemote then
 	combatRemote = Instance.new("RemoteEvent")
 	combatRemote.Name = "CombatRemote"
 	combatRemote.Parent = ReplicatedStorage
-	print("[CombatServer] Created CombatRemote event")
 else
-	print("[CombatServer] Found existing CombatRemote")
 end
 
 -- Server-side damage handler
@@ -116,7 +109,6 @@ local function onCombatRequest(player, target, damage)
         return
     end
     
-    print("[CombatServer] Processing attack from " .. player.Name .. " to " .. tostring(target.Name or target.ClassName))
     
     -- ========== TEAM CHECK - Ngăn friendly fire ==========
     local attackerTeam = player.Team and player.Team.Name
@@ -146,7 +138,6 @@ local function onCombatRequest(player, target, damage)
     
     -- Ngăn đánh cùng team
     if attackerTeam and targetTeam and attackerTeam == targetTeam then
-        print("[CombatServer] BLOCKED friendly fire: " .. player.Name .. " (" .. attackerTeam .. ") tried to hit " .. tostring(target.Name) .. " (" .. targetTeam .. ")")
         return
     end
     -- ===========================================================
@@ -177,7 +168,6 @@ local function onCombatRequest(player, target, damage)
         targetRootPart = target:FindFirstChild("HumanoidRootPart")
         targetName = target.Name
         
-        print("[CombatServer] Target is Model: " .. targetName .. ", Humanoid: " .. tostring(targetHumanoid ~= nil) .. ", RootPart: " .. tostring(targetRootPart ~= nil))
         
         -- Check if this is a bot or monster
         -- Bot names: [BOT-1v1], [BOT-2v2], [BOT-3v3], [BOT]
@@ -194,7 +184,6 @@ local function onCombatRequest(player, target, damage)
                         for bot, data in pairs(activeBots) do
                             if bot == target or bot.Name == targetName then
                                 botTeam = data.team
-                                print("[CombatServer] Found bot team from " .. managerName .. ": " .. tostring(botTeam))
                                 break
                             end
                         end
@@ -203,10 +192,8 @@ local function onCombatRequest(player, target, damage)
                 end
             end
             
-            print("[CombatServer] Bot detected: " .. targetName .. " | Team: " .. tostring(botTeam))
         elseif string.find(targetName, "[MONSTER", 1, true) or string.find(targetName, "[Monster", 1, true) or target:GetAttribute("IsPatrolMonster") or target:GetAttribute("IsMonster") then
             isMonster = true
-            print("[CombatServer] Monster detected: " .. targetName)
         end
         
     else
@@ -245,7 +232,6 @@ local function onCombatRequest(player, target, damage)
         local distance = (attackerRootPart.Position - targetRootPart.Position).Magnitude
         local maxRange = 15 -- Increased range for better hit detection
         
-        print("[CombatServer] Distance check: " .. string.format("%.2f", distance) .. " studs (max: " .. maxRange .. ")")
         
         if distance > maxRange then
             warn("[CombatServer] Target out of range (server validation): " .. string.format("%.2f", distance) .. " > " .. maxRange)
@@ -273,9 +259,7 @@ local function onCombatRequest(player, target, damage)
     local newHealth = targetHumanoid.Health
     
     if multiplierUsed > 1.0 then
-        print("[CombatServer] " .. player.Name .. " dealt " .. finalDamage .. " damage to " .. targetName .. " (base: " .. damage .. " x" .. multiplierUsed .. " multiplier) (HP: " .. oldHealth .. " -> " .. newHealth .. ")")
     else
-        print("[CombatServer] " .. player.Name .. " dealt " .. finalDamage .. " damage to " .. targetName .. " (HP: " .. oldHealth .. " -> " .. newHealth .. ")")
     end
     
     -- Set last attacker for KillTracker (chỉ nếu target là player)
@@ -285,18 +269,15 @@ local function onCombatRequest(player, target, damage)
     
     -- Check if target died
     if targetHumanoid.Health <= 0 then
-        print(targetName .. " was defeated by " .. player.Name)
         
         -- Record kill for player killing bot
         if isBot and _G.MatchEndConditions then
             _G.MatchEndConditions.RecordKill(player, {name = targetName, team = botTeam})
-            print("[CombatServer] Recorded kill: " .. player.Name .. " killed bot " .. targetName)
         end
         
         -- Record kill for player killing monster
         if isMonster and _G.MatchEndConditions then
             _G.MatchEndConditions.RecordKill(player, {name = targetName, team = "Monster"})
-            print("[CombatServer] Recorded kill: " .. player.Name .. " killed monster " .. targetName)
         end
         
         -- Record kill for MVPSystem
@@ -308,8 +289,6 @@ end
 
 -- Connect the remote event
 combatRemote.OnServerEvent:Connect(function(player, target, damage)
-	print("[CombatServer] Received attack from " .. player.Name .. " to " .. (target and target.Name or "nil") .. " for " .. tostring(damage) .. " damage")
 	onCombatRequest(player, target, damage)
 end)
 
-print("Combat Server Loaded!")

@@ -39,11 +39,9 @@ local function collectGold(orb, player)
         if killerTeam == collectorTeam then
             -- Cùng team với killer = 100%
             multiplier = 1.0
-            print("[GoldOrb] " .. player.Name .. " (Team: " .. collectorTeam .. ") cùng team với " .. killerAttr.Value .. " → 100% vàng")
         else
             -- Khác team = 50%
             multiplier = 0.5
-            print("[GoldOrb] " .. player.Name .. " (Team: " .. collectorTeam .. ") khác team với " .. killerAttr.Value .. " (Team: " .. killerTeam .. ") → 50% vàng")
         end
     end
     
@@ -54,7 +52,6 @@ local function collectGold(orb, player)
     local playerData = PlayerData.Get(player)
     if playerData then
         PlayerData.Set(player, "Money", playerData.Money + actualGold)
-        print("[GoldOrb] ✅ " .. player.Name .. " đã nhặt " .. actualGold .. " vàng (gốc: " .. goldValue .. ", multiplier: " .. (multiplier * 100) .. "%)")
     end
     
     -- Phát âm thanh
@@ -153,7 +150,6 @@ Workspace.DescendantAdded:Connect(function(descendant)
                 end
             end)
             
-            print("[GoldCollection] Đã setup GoldOrb mới")
         end
     end
 end)
@@ -177,7 +173,6 @@ local function scanExistingGoldOrbs()
             end
         end
     end
-    print("[GoldCollection] Đã quét và setup " .. count .. " GoldOrb hiện có")
 end
 
 -- Quét GoldOrb hiện có
@@ -186,5 +181,3 @@ scanExistingGoldOrbs()
 -- Bắt đầu update loop
 coroutine.wrap(updateGoldOrbs)()
 
-print("[GoldCollectionSystem] Đã khởi động thành công!")
-print("[GoldCollectionSystem] Tự động thu thập khi player đến gần: " .. AUTO_COLLECT_RANGE .. " studs")

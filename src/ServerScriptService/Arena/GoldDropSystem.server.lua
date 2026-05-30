@@ -95,11 +95,9 @@ local function onPlayerDeath(player)
     local playerTeam = playerTeamStorage[player.UserId] or "Lobby"
     
     -- Debug: In ra giá trị team
-    print("[GoldDrop] DEBUG: " .. player.Name .. " team = " .. tostring(playerTeam))
     
     -- Kiểm tra team - chỉ Team1 và Team2 rơi vàng
     if playerTeam ~= "Team1" and playerTeam ~= "Team2" then
-        print("[GoldDrop] " .. player.Name .. " (" .. playerTeam .. ") không rơi vàng")
         playerLastAttacker[player.UserId] = nil
         playerTeamStorage[player.UserId] = nil
         return
@@ -114,9 +112,7 @@ local function onPlayerDeath(player)
         if hrp then
             spawnGoldOrbs(hrp.Position, GOLD_ON_PLAYER_DEATH, killer)
             if killer then
-                print("[GoldDrop] " .. player.Name .. " (" .. playerTeam .. ") đã bị " .. killer.Name .. " hạ gục, rơi " .. GOLD_ON_PLAYER_DEATH .. " vàng")
             else
-                print("[GoldDrop] " .. player.Name .. " (" .. playerTeam .. ") đã chết, rơi " .. GOLD_ON_PLAYER_DEATH .. " vàng")
             end
         end
     end
@@ -141,9 +137,7 @@ local function onNPCDeath(npcModel)
     if hrp then
         spawnGoldOrbs(hrp.Position, GOLD_ON_NPC_DEATH, killer)
         if killer then
-            print("[GoldDrop] " .. npcModel.Name .. " đã bị " .. killer.Name .. " tiêu diệt, rơi " .. GOLD_ON_NPC_DEATH .. " vàng")
         else
-            print("[GoldDrop] " .. npcModel.Name .. " đã bị tiêu diệt, rơi " .. GOLD_ON_NPC_DEATH .. " vàng")
         end
     end
 end
@@ -155,7 +149,6 @@ local function setupPlayerDeathDetection(player)
         local team = player.Team and player.Team.Name or "Lobby"
         if team == "Team1" or team == "Team2" then
             playerTeamStorage[player.UserId] = team
-            print("[GoldDrop] " .. player.Name .. " team saved: " .. team)
         end
     end)
     
@@ -256,7 +249,6 @@ local function setupNPCDeathDetection(npcModel)
             -- Xóa khỏi tracking sau khi chết
             trackedNPCs[npcModel] = nil
         end)
-        print("[GoldDrop] Đã setup theo dõi cho: " .. npcModel.Name)
     end
 end
 
@@ -283,7 +275,6 @@ local function scanExistingNPCs()
             end
         end
     end
-    print("[GoldDrop] Đã quét và setup " .. count .. " NPC/bot hiện có")
 end
 
 -- Theo dõi NPC mới được thêm vào Workspace
@@ -318,6 +309,3 @@ end
 -- Quét NPC hiện có
 scanExistingNPCs()
 
-print("[GoldDropSystem] Đã khởi động thành công!")
-print("[GoldDropSystem] Vàng rơi khi quái chết: " .. GOLD_ON_NPC_DEATH)
-print("[GoldDropSystem] Vàng rơi khi player chết: " .. GOLD_ON_PLAYER_DEATH)

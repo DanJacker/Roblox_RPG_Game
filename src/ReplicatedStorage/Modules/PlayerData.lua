@@ -89,7 +89,6 @@ function PlayerData.Init(player)
 	
 	player.CharacterAdded:Connect(syncCharacter)
 	
-	print("[PlayerData] Initialized for " .. player.Name .. " | RankPoints: " .. data[player.UserId].RankPoints)
 end
 
 -- Hiện leaderstats khi vào trận
@@ -121,7 +120,6 @@ function PlayerData.ShowLeaderstats(player)
 		stat.Parent = leaderstats
 	end
 	
-	print("[PlayerData] Đã hiện leaderstats cho " .. player.Name .. " (Team: " .. teamStat.Value .. ")")
 end
 
 -- Ẩn leaderstats khi hết trận
@@ -129,7 +127,6 @@ function PlayerData.HideLeaderstats(player)
 	local leaderstats = player:FindFirstChild("leaderstats")
 	if leaderstats then
 		leaderstats:Destroy()
-		print("[PlayerData] Đã ẩn leaderstats cho " .. player.Name)
 	end
 	
 	-- Reset team về Lobby
@@ -225,7 +222,6 @@ function PlayerData.Remove(player)
 	end
 	
 	data[player.UserId] = nil
-	print("[PlayerData] Saved and cleaned up for " .. player.Name)
 end
 
 return PlayerData

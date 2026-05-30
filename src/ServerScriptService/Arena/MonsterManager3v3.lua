@@ -5,7 +5,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-print("[MonsterManager3v3] Khoi dong...")
 
 local CONFIG = {
 	DETECTION_RANGE = 150,      -- Tang pham vi phat hien
@@ -312,7 +311,6 @@ local function spawnMonster(spawnPos)
 		end)
 	end
 
-	print(string.format("[MonsterManager3v3] Spawned: %s", name))
 	return monsterData
 end
 
@@ -346,6 +344,5 @@ RunService.Heartbeat:Connect(function(deltaTime)
 end)
 
 _G.MonsterManager3v3 = MonsterManager3v3
-print("[MonsterManager3v3] San sang!")
 
 return MonsterManager3v3

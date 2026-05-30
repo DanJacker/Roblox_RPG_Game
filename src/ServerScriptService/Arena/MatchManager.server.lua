@@ -72,16 +72,11 @@ local spawnPlayersInMatch
 
 -- H?m b?t d?u tr?n d?u
 local function startMatch(matchId, matchData)
-	print("[MatchManager] B?t d?u tr?n d?u " .. matchId .. " (" .. matchData.mode .. ")")
-	print("[MatchManager] Team 1: " .. (matchData.team1 and #matchData.team1 or 0) .. " players")
-	print("[MatchManager] Team 2: " .. (matchData.team2 and #matchData.team2 or 0) .. " players")
-	print("[MatchManager] All players: " .. (matchData.allPlayers and #matchData.allPlayers or 0) .. " players")
 
 	-- ========== RESET BASE STATE FOR NEW MATCH ==========
 	-- Reset gameEnded và base health trước khi bắt đầu trận mới
 	if _G.ResetBases then
 		_G.ResetBases()
-		print("[MatchManager] Đã reset base state cho trận mới")
 	end
 
 	-- ========== SECURITY: Record match start for anti-cheat ==========
@@ -125,7 +120,6 @@ local function startMatch(matchId, matchData)
 			if teamObj then
 				player.Team = teamObj
 				player.Neutral = false
-				print("[MatchManager] ?? g?n " .. player.Name .. " v?o " .. (isTeam1 and "Team 1" or "Team 2"))
 
 				_G.PlayerMatchInfo[player.UserId] = {
 					matchId = matchId,
@@ -195,7 +189,6 @@ spawnPlayersInMatch = function(matchId)
 	-- Teleport t?t c? players d?n spawn points trong map
 	local MatchTeleporter = _G.MatchTeleporter
 	if MatchTeleporter then
-		print("[MatchManager] S? d?ng MatchTeleporter d? teleport players...")
 		MatchTeleporter.TeleportPlayersToMatch(matchId, matchData.mode, matchData.team1, matchData.team2)
 	else
 		-- Fallback: S? d?ng c?ch cu n?u MatchTeleporter kh?ng c?
@@ -204,7 +197,6 @@ spawnPlayersInMatch = function(matchId)
 			local player = Players:GetPlayerByUserId(playerId)
 			if player then
 				if playersAlreadyTeleported[playerId] then
-					print("[MatchManager] " .. player.Name .. " d? du?c teleport r?i, b? qua")
 				else
 					playersAlreadyTeleported[playerId] = true
 
@@ -221,7 +213,6 @@ spawnPlayersInMatch = function(matchId)
 
 						if spawnPos then
 							player.Character:PivotTo(CFrame.new(spawnPos))
-							print("[MatchManager] ?? spawn " .. player.Name .. " t?i " .. tostring(spawnPos))
 						end
 					end
 				end
@@ -256,30 +247,22 @@ spawnPlayersInMatch = function(matchId)
 	-- B?t d?u theo d?i th?ng k? match end conditions
 	if _G.MatchEndConditions then
 		_G.MatchEndConditions.StartMatch(matchId)
-		print("[MatchManager] ?? b?t d?u theo d?i th?ng k? match end conditions")
 	end
 
 	-- B?t d?u theo d?i MVP
-	print("[MatchManager] Checking MVPSystem: " .. tostring(_G.MVPSystem ~= nil))
 	if _G.MVPSystem then
-		print("[MatchManager] MVPSystem.StartMatch exists: " .. tostring(_G.MVPSystem.StartMatch ~= nil))
-		print("[MatchManager] matchData.team1 count: " .. tostring(matchData.team1 and #matchData.team1 or 0))
-		print("[MatchManager] matchData.team2 count: " .. tostring(matchData.team2 and #matchData.team2 or 0))
 
 		-- Debug: In t?n c?c players
 		if matchData.team1 then
 			for i, pd in ipairs(matchData.team1) do
-				print("[MatchManager] Team1 player " .. i .. ": " .. tostring(pd.name) .. " (isBot: " .. tostring(pd.isBot) .. ")")
 			end
 		end
 		if matchData.team2 then
 			for i, pd in ipairs(matchData.team2) do
-				print("[MatchManager] Team2 player " .. i .. ": " .. tostring(pd.name) .. " (isBot: " .. tostring(pd.isBot) .. ")")
 			end
 		end
 
 		_G.MVPSystem.StartMatch(matchData)
-		print("[MatchManager] ?? b?t d?u theo d?i MVP")
 	else
 		warn("[MatchManager] MVPSystem KH?NG KH? D?NG!")
 	end
@@ -313,10 +296,6 @@ end
 
 -- H?m k?t th?c tr?n d?u
 local function endMatch(matchId, reason)
-	print("[MatchManager] ========== END MATCH CALLED ==========")
-	print("[MatchManager] matchId: " .. tostring(matchId))
-	print("[MatchManager] reason: " .. tostring(reason))
-	print("[MatchManager] activeMatches exists: " .. tostring(activeMatches[matchId] ~= nil))
 	
 	if not activeMatches[matchId] then
 		warn("[MatchManager] Match not found in activeMatches! Available matches:")
@@ -327,7 +306,6 @@ local function endMatch(matchId, reason)
 	end
 
 	local matchData = activeMatches[matchId]
-	print("[MatchManager] K?t th?c tr?n d?u " .. matchId .. " (" .. reason .. ")")
 
 	-- D?ng timer
 	if _G.StopMatchTimer then
@@ -336,7 +314,6 @@ local function endMatch(matchId, reason)
 
 	-- Cleanup Boss khi tr?n k?t th?c
 	if _G.BossManager and _G.BossManager.Cleanup then
-		print("[MatchManager] Cleanup Boss...")
 		_G.BossManager.Cleanup()
 	end
 
@@ -351,7 +328,6 @@ local function endMatch(matchId, reason)
 	-- ========== HI?N TH? VICTORY/LOST UI V? MVP UI ==========
 	-- G?i MatchEndHandler d? hi?n th? UI
 	if _G.MatchEndHandler and _G.MatchEndHandler.EndMatch then
-		print("[MatchManager] G?i MatchEndHandler.EndMatch d? hi?n th? Victory/Lost UI")
 		_G.MatchEndHandler.EndMatch(winnerTeam, reason)
 	else
 		warn("[MatchManager] MatchEndHandler KH?NG KH? D?NG!")
@@ -360,15 +336,11 @@ local function endMatch(matchId, reason)
 
 	-- ========== H? TH?NG RANKING ==========
 	-- C?p nh?t di?m ranking cho t?t c? players
-	print("[MatchManager] ========== RANKING UPDATE ==========")
-	print("[MatchManager] matchData.players: " .. tostring(matchData.players and #matchData.players or 0) .. " players")
-	print("[MatchManager] winnerTeam: " .. tostring(winnerTeam))
 	
 	local rankingResults = {}
 	local Security = _G.Security
 
 	for _, playerId in ipairs(matchData.players) do
-		print("[MatchManager] Processing playerId: " .. tostring(playerId))
 		local player = Players:GetPlayerByUserId(playerId)
 		if player then
 			local playerData = PlayerData.Get(player)
@@ -428,7 +400,6 @@ local function endMatch(matchId, reason)
 					rankChange.oldRank.displayName, rankChange.newRank.displayName))
 
 				if rankChange.rankUp then
-					print("[Ranking] " .. player.Name .. " L?N RANK: " .. rankChange.newRank.displayName .. "!")
 				end
 			end
 		end
@@ -488,7 +459,6 @@ local function endMatch(matchId, reason)
 
 				player:LoadCharacter()
 
-				print("[MatchManager] " .. player.Name .. " d? tr? v? lobby")
 			end)
 		end
 	end
@@ -498,26 +468,22 @@ local function endMatch(matchId, reason)
 		-- Reset tất cả spectator status
 		if _G.ResetAllSpectators then
 			_G.ResetAllSpectators()
-			print("[MatchManager] Đã reset spectator status")
 		end
 
 		-- Reset map về trạng thái ban đầu
 		local mapMode = matchData.mode or "1v1"
 		if _G.MapResetSystem then
 			_G.MapResetSystem.ResetMap(mapMode)
-			print("[MatchManager] Đã reset map " .. mapMode)
 		else
 			-- Fallback: Reset base colors nếu MapResetSystem không có
 			if _G.ResetBases then
 				_G.ResetBases()
-				print("[MatchManager] Đã reset base colors (fallback)")
 			end
 		end
 		
 		-- Clear tất cả bots
 		if _G.BotManager then
 			_G.BotManager.ClearAllBots()
-			print("[MatchManager] Đã clear tất cả bots")
 		end
 	end)
 
@@ -542,20 +508,17 @@ SpawnSelect.OnServerEvent:Connect(function(player, data)
 		if Security then
 			local allowed, rateMsg = Security.RateLimiter.Check(player, "SpawnSelect")
 			if not allowed then
-				print("[MatchManager] Rate limited spawn select: " .. player.Name)
 				return
 			end
 
 			-- Validate position
 			local valid, validatedPos = Security.InputValidator.ValidatePosition(data.position)
 			if not valid then
-				print("[MatchManager] Invalid spawn position: " .. player.Name .. " - " .. tostring(validatedPos))
 				return
 			end
 			data.position = validatedPos
 		end
 
-		print("[MatchManager] " .. player.Name .. " d? ch?n v? tr? spawn: " .. tostring(data.position))
 
 		playerSpawnPositions[player.UserId] = data.position
 		
@@ -578,7 +541,6 @@ SpawnSelect.OnServerEvent:Connect(function(player, data)
 
 				if player.Character and data.position then
 					player.Character:PivotTo(CFrame.new(data.position))
-					print("[MatchManager] ?? teleport " .. player.Name .. " d?n " .. tostring(data.position))
 
 					SpawnSelect:FireClient(player, {
 						action = "endSelection"
@@ -604,10 +566,7 @@ end
 
 -- Hàm lấy current match ID
 local function getCurrentMatchId()
-	print("[MatchManager] GetCurrentMatchId called")
-	print("[MatchManager] activeMatches count: " .. tostring(next(activeMatches) and "not empty" or "EMPTY"))
 	for matchId, matchData in pairs(activeMatches) do
-		print("[MatchManager] Found matchId: " .. tostring(matchId) .. " with " .. tostring(matchData.players and #matchData.players or 0) .. " players")
 		return matchId -- Return first active match
 	end
 	warn("[MatchManager] No active matches found!")
@@ -622,10 +581,8 @@ if RequestRankUpdate then
 		if playerData then
 			local rankInfo = RankingSystem.GetRankFromPoints(playerData.RankPoints or 0)
 			RankUpdate:FireClient(player, rankInfo)
-			print("[MatchManager] Đã gửi rank info cho " .. player.Name .. ": " .. rankInfo.displayName)
 		end
 	end)
-	print("[MatchManager] Đã setup RequestRankUpdate handler")
 end
 
 -- Export functions
@@ -634,5 +591,3 @@ _G.EndMatch = endMatch
 _G.IsPlayerInMatch = isPlayerInMatch
 _G.GetCurrentMatchId = getCurrentMatchId
 
-print("[MatchManager] Match Manager d? du?c t?i!")
-print("[MatchManager] H? tr?: 1v1, 2v2, 3v3")

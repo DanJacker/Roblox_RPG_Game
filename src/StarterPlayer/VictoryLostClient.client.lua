@@ -3,7 +3,6 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
-print("[VictoryLostClient] Đang khởi động...")
 
 -- Đợi player sẵn sàng
 local player = Players.LocalPlayer
@@ -18,23 +17,17 @@ if not PlayerGui then
 	return
 end
 
-print("[VictoryLostClient] PlayerGui đã sẵn sàng!")
 
 -- Đợi _G.MVPDisplay sẵn sàng (quan trọng!) - Đợi lâu hơn
-print("[VictoryLostClient] Đang đợi _G.MVPDisplay...")
 local mvpWaitTime = 0
 local maxWaitTime = 15 -- Tăng thời gian đợi lên 15 giây
 
 while not (_G.MVPDisplay and _G.MVPDisplay.showMVP) and mvpWaitTime < maxWaitTime do
-	print("[VictoryLostClient] Đợi _G.MVPDisplay khởi động... (" .. mvpWaitTime .. "s)")
 	task.wait(0.5)
 	mvpWaitTime = mvpWaitTime + 0.5
 end
 
 if _G.MVPDisplay and _G.MVPDisplay.showMVP then
-	print("[VictoryLostClient] ✓ _G.MVPDisplay đã sẵn sàng!")
-	print("[VictoryLostClient] _G.MVPDisplay.showMVP: " .. tostring(_G.MVPDisplay.showMVP))
-	print("[VictoryLostClient] _G.MVPDisplay.container: " .. tostring(_G.MVPDisplay.container))
 else
 	warn("[VictoryLostClient] ⚠️ _G.MVPDisplay KHÔNG sẵn sàng sau " .. maxWaitTime .. "s!")
 	warn("[VictoryLostClient] _G.MVPDisplay: " .. tostring(_G.MVPDisplay))
@@ -66,21 +59,15 @@ if lostFrame then lostFrame.Visible = false end
 
 -- Hàm hiển thị MVP GUI với data đầy đủ
 local function showMVPGui()
-	print("[VictoryLostClient] ========== SHOW MVP GUI ==========")
-	print("[VictoryLostClient] Đang hiển thị MVP GUI...")
 	
 	-- Đợi _G.MVPDisplay sẵn sàng - tăng thời gian đợi
 	local maxWait = 15
 	local waited = 0
 	while not (_G.MVPDisplay and _G.MVPDisplay.showMVP) and waited < maxWait do
-		print("[VictoryLostClient] Đợi _G.MVPDisplay... (" .. waited .. "s)")
 		task.wait(0.5)
 		waited = waited + 0.5
 	end
 	
-	print("[VictoryLostClient] _G.MVPDisplay: " .. tostring(_G.MVPDisplay))
-	print("[VictoryLostClient] _G.MVPDisplay.showMVP: " .. tostring(_G.MVPDisplay and _G.MVPDisplay.showMVP))
-	print("[VictoryLostClient] _G.MVPDisplay.getStoredData: " .. tostring(_G.MVPDisplay and _G.MVPDisplay.getStoredData))
 	
 	if not _G.MVPDisplay then
 		warn("[VictoryLostClient] ⚠️ _G.MVPDisplay is NIL! Cannot show MVP UI")
@@ -94,34 +81,24 @@ local function showMVPGui()
 	
 	-- Lấy stored data
 	local storedData = _G.MVPDisplay.getStoredData and _G.MVPDisplay.getStoredData()
-	print("[VictoryLostClient] storedData: " .. tostring(storedData))
 	
 	if storedData then
-		print("[VictoryLostClient] storedData.winnerTeam: " .. tostring(storedData.winnerTeam))
-		print("[VictoryLostClient] storedData.winnerMVP: " .. tostring(storedData.winnerMVP and storedData.winnerMVP.name or "nil"))
-		print("[VictoryLostClient] storedData.loserMVP: " .. tostring(storedData.loserMVP and storedData.loserMVP.name or "nil"))
 	else
-		print("[VictoryLostClient] ⚠️ storedData is NIL - MVP data not received yet!")
 		-- Thử đợi thêm nếu data chưa có
 		local dataWait = 0
 		while not (_G.MVPDisplay.getStoredData and _G.MVPDisplay.getStoredData()) and dataWait < 10 do
-			print("[VictoryLostClient] Đợi MVP data... (" .. dataWait .. "s)")
 			task.wait(0.5)
 			dataWait = dataWait + 0.5
 		end
 		storedData = _G.MVPDisplay.getStoredData and _G.MVPDisplay.getStoredData()
-		print("[VictoryLostClient] After waiting, storedData: " .. tostring(storedData))
 	end
 	
 	-- Gọi hàm showMVP từ MVPDisplay script
-	print("[VictoryLostClient] Đang gọi _G.MVPDisplay.showMVP()...")
 	_G.MVPDisplay.showMVP()
-	print("[VictoryLostClient] ✓ Đã gọi showMVP()")
 	
 	-- Kiểm tra container visible
 	task.wait(0.5)
 	if _G.MVPDisplay.container then
-		print("[VictoryLostClient] Container.Visible = " .. tostring(_G.MVPDisplay.container.Visible))
 	else
 		warn("[VictoryLostClient] Container is NIL!")
 	end
@@ -130,7 +107,6 @@ end
 -- Xử lý click nút đóng
 if victoryCloseButton then
 	victoryCloseButton.MouseButton1Click:Connect(function()
-		print("[VictoryLostClient] ========== Victory CloseButton clicked ==========")
 		-- Hủy timer tự động ẩn
 		if victoryTimer then
 			task.cancel(victoryTimer)
@@ -143,14 +119,12 @@ if victoryCloseButton then
 		task.wait(0.1) -- Small delay to ensure frame is hidden
 		showMVPGui()
 	end)
-	print("[VictoryLostClient] ✓ Victory CloseButton connected")
 else
 	warn("[VictoryLostClient] ✗ Victory CloseButton NOT FOUND!")
 end
 
 if lostCloseButton then
 	lostCloseButton.MouseButton1Click:Connect(function()
-		print("[VictoryLostClient] ========== Lost CloseButton clicked ==========")
 		-- Hủy timer tự động ẩn
 		if lostTimer then
 			task.cancel(lostTimer)
@@ -163,12 +137,10 @@ if lostCloseButton then
 		task.wait(0.1) -- Small delay to ensure frame is hidden
 		showMVPGui()
 	end)
-	print("[VictoryLostClient] ✓ Lost CloseButton connected")
 else
 	warn("[VictoryLostClient] ✗ Lost CloseButton NOT FOUND!")
 end
 
-print("[VictoryLostClient] ✓ GUI đã sẵn sàng!")
 
 -- ========== REMOTE EVENTS ==========
 local remoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents")
@@ -185,11 +157,9 @@ if not victoryAnnouncement then
 	victoryAnnouncement.Parent = remoteEvents
 end
 
-print("[VictoryLostClient] ✓ VictoryAnnouncement RemoteEvent đã kết nối!")
 
 -- ========== HÀM HIỂN THỊ ==========
 local function showVictory(teamName)
-	print("[VictoryLostClient] Hiển thị VICTORY UI cho team: " .. tostring(teamName))
 	
 	if victoryFrame then
 		-- Cập nhật team label
@@ -224,7 +194,6 @@ local function showVictory(teamName)
 end
 
 local function showLost(teamName)
-	print("[VictoryLostClient] Hiển thị LOST UI cho team: " .. tostring(teamName))
 	
 	if lostFrame then
 		-- Cập nhật team label
@@ -260,14 +229,9 @@ end
 
 -- ========== LẮNG NGHE EVENT ==========
 victoryAnnouncement.OnClientEvent:Connect(function(data)
-	print("[VictoryLostClient] ========== NHẬN EVENT ==========")
-	print("[VictoryLostClient] Winner Team: " .. tostring(data.winnerTeam))
-	print("[VictoryLostClient] Player Team: " .. tostring(data.playerTeam))
-	print("[VictoryLostClient] Reason: " .. tostring(data.reason))
 	
 	-- Tính isWinner từ winnerTeam và playerTeam
 	local isWinner = data.winnerTeam == data.playerTeam
-	print("[VictoryLostClient] Is Winner: " .. tostring(isWinner))
 	
 	if isWinner then
 		showVictory(data.playerTeam)
@@ -282,6 +246,3 @@ _G.VictoryLostClient = {
 	showLost = showLost
 }
 
-print("[VictoryLostClient] ========== ĐÃ KHỞI TẠO THÀNH CÔNG! ==========")
-print("[VictoryLostClient] Sử dụng _G.VictoryLostClient.showVictory(teamName) để test")
-print("[VictoryLostClient] Sử dụng _G.VictoryLostClient.showLost(teamName) để test")

@@ -2,8 +2,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("[MVP] ========== KHỞI TẠO MVP SYSTEM ==========")
-print("[MVP] Đang khởi động...")
 
 -- ========== CẤU HÌNH ==========
 local CONFIG = {
@@ -52,9 +50,7 @@ local function initPlayerStats(playerName, teamName)
 			team = teamName or "Unknown",
 			isBot = playerName:find("%[BOT%]") ~= nil or playerName:find("%[MONSTER%]") ~= nil
 		}
-		print(string.format("[MVP] Initialized stats for: %s (team: %s, isBot: %s)", playerName, teamName or "Unknown", tostring(playerStats[playerName].isBot)))
 	else
-		print(string.format("[MVP] Stats already exists for: %s", playerName))
 	end
 end
 
@@ -130,32 +126,19 @@ end
 
 -- Bắt đầu match mới
 local function startMatch(matchData)
-	print("[MVP] ========== START MATCH ==========")
 	currentMatch = matchData
 	playerStats = {}
 	
-	print("[MVP] StartMatch called with matchData:")
-	print("[MVP]   mode: " .. tostring(matchData.mode))
-	print("[MVP]   team1: " .. tostring(matchData.team1 and #matchData.team1 or 0) .. " players")
-	print("[MVP]   team2: " .. tostring(matchData.team2 and #matchData.team2 or 0) .. " players")
 	
 	-- Khởi tạo stats cho tất cả players trong match
 	if matchData.team1 then
-		print("[MVP] Processing Team1...")
 		for i, playerData in ipairs(matchData.team1) do
-			print("[MVP] DEBUG team1[" .. i .. "]: " .. tostring(playerData))
-			print("[MVP]   type: " .. type(playerData))
 			if type(playerData) == "table" then
-				print("[MVP]   name: " .. tostring(playerData.name))
-				print("[MVP]   Name: " .. tostring(playerData.Name))
-				print("[MVP]   playerId: " .. tostring(playerData.playerId))
-				print("[MVP]   isBot: " .. tostring(playerData.isBot))
 				
 				-- Lấy name từ nhiều nguồn - SỬA: Bỏ điều kiện name ~= "Unknown"
 				local name = playerData.name or playerData.Name or playerData.playerName
 				if name and name ~= "" then
 					initPlayerStats(name, "Team1")
-					print("[MVP]   ✓ Team1 player initialized: " .. name)
 				else
 					-- Tạo tên mặc định nếu không có tên
 					local defaultName = "Team1_Player" .. i
@@ -164,7 +147,6 @@ local function startMatch(matchData)
 				end
 			elseif type(playerData) == "string" then
 				initPlayerStats(playerData, "Team1")
-				print("[MVP]   ✓ Team1 player (string) initialized: " .. playerData)
 			else
 				warn("[MVP]   ✗ INVALID playerData type for Team1 player " .. i .. ": " .. type(playerData))
 			end
@@ -174,21 +156,13 @@ local function startMatch(matchData)
 	end
 	
 	if matchData.team2 then
-		print("[MVP] Processing Team2...")
 		for i, playerData in ipairs(matchData.team2) do
-			print("[MVP] DEBUG team2[" .. i .. "]: " .. tostring(playerData))
-			print("[MVP]   type: " .. type(playerData))
 			if type(playerData) == "table" then
-				print("[MVP]   name: " .. tostring(playerData.name))
-				print("[MVP]   Name: " .. tostring(playerData.Name))
-				print("[MVP]   playerId: " .. tostring(playerData.playerId))
-				print("[MVP]   isBot: " .. tostring(playerData.isBot))
 				
 				-- Lấy name từ nhiều nguồn - SỬA: Bỏ điều kiện name ~= "Unknown"
 				local name = playerData.name or playerData.Name or playerData.playerName
 				if name and name ~= "" then
 					initPlayerStats(name, "Team2")
-					print("[MVP]   ✓ Team2 player initialized: " .. name)
 				else
 					-- Tạo tên mặc định nếu không có tên
 					local defaultName = "Team2_Player" .. i
@@ -197,7 +171,6 @@ local function startMatch(matchData)
 				end
 			elseif type(playerData) == "string" then
 				initPlayerStats(playerData, "Team2")
-				print("[MVP]   ✓ Team2 player (string) initialized: " .. playerData)
 			else
 				warn("[MVP]   ✗ INVALID playerData type for Team2 player " .. i .. ": " .. type(playerData))
 			end
@@ -207,14 +180,9 @@ local function startMatch(matchData)
 	end
 	
 	-- In tổng kết
-	print("[MVP] ========== INITIALIZATION SUMMARY ==========")
-	print("[MVP] Total players in playerStats: " .. tostring(next(playerStats) and "not empty" or "EMPTY"))
 	for name, stats in pairs(playerStats) do
-		print(string.format("[MVP]   %s: team=%s, isBot=%s", name, tostring(stats.team), tostring(stats.isBot)))
 	end
-	print("[MVP] ===========================================")
 	
-	print("[MVP] Bắt đầu match: " .. (matchData.matchId or matchData.mode or "unknown"))
 end
 
 -- Ghi nhận kill
@@ -232,7 +200,6 @@ local function recordKill(killerName, victimName)
 				local botName = bot.Name or data.name
 				if botName == killerName or data.name == killerName then
 					killerTeam = data.team
-					print("[MVP] Found bot team: " .. killerName .. " -> " .. tostring(killerTeam))
 					break
 				end
 			end
@@ -245,7 +212,6 @@ local function recordKill(killerName, victimName)
 							local botName = bot.Name or data.name
 							if botName == killerName or data.name == killerName then
 								killerTeam = data.team
-								print("[MVP] Found bot team (mode-specific): " .. killerName .. " -> " .. tostring(killerTeam))
 								break
 							end
 						end
@@ -260,13 +226,11 @@ local function recordKill(killerName, victimName)
 			local player = Players:FindFirstChild(killerName)
 			if player and player.Team then
 				killerTeam = player.Team.Name
-				print("[MVP] Found team from player object: " .. killerName .. " -> " .. killerTeam)
 			end
 		end
 		
 		if killerTeam then
 			initPlayerStats(killerName, killerTeam)
-			print("[MVP] Initialized stats for: " .. killerName .. " (team: " .. killerTeam .. ")")
 		else
 			warn("[MVP] Không tìm thấy team cho killer: " .. killerName .. " - SKIPPING")
 			return
@@ -274,7 +238,6 @@ local function recordKill(killerName, victimName)
 	end
 	
 	playerStats[killerName].kills = playerStats[killerName].kills + 1
-	print(string.format("[MVP] %s killed %s | Kills: %d", killerName, victimName, playerStats[killerName].kills))
 end
 
 -- Ghi nhận base damage
@@ -292,7 +255,6 @@ local function recordBaseDamage(attackerName, damage)
 				local botName = bot.Name or data.name
 				if botName == attackerName or data.name == attackerName then
 					attackerTeam = data.team
-					print("[MVP] Found bot team: " .. attackerName .. " -> " .. tostring(attackerTeam))
 					break
 				end
 			end
@@ -305,7 +267,6 @@ local function recordBaseDamage(attackerName, damage)
 							local botName = bot.Name or data.name
 							if botName == attackerName or data.name == attackerName then
 								attackerTeam = data.team
-								print("[MVP] Found bot team (mode-specific): " .. attackerName .. " -> " .. tostring(attackerTeam))
 								break
 							end
 						end
@@ -320,13 +281,11 @@ local function recordBaseDamage(attackerName, damage)
 			local player = Players:FindFirstChild(attackerName)
 			if player and player.Team then
 				attackerTeam = player.Team.Name
-				print("[MVP] Found team from player object: " .. attackerName .. " -> " .. attackerTeam)
 			end
 		end
 		
 		if attackerTeam then
 			initPlayerStats(attackerName, attackerTeam)
-			print("[MVP] Initialized stats for: " .. attackerName .. " (team: " .. attackerTeam .. ")")
 		else
 			warn("[MVP] Không tìm thấy team cho attacker: " .. attackerName .. " - SKIPPING")
 			return
@@ -334,14 +293,10 @@ local function recordBaseDamage(attackerName, damage)
 	end
 	
 	playerStats[attackerName].baseDamage = playerStats[attackerName].baseDamage + damage
-	print(string.format("[MVP] %s gây %d damage | Total: %d", attackerName, damage, playerStats[attackerName].baseDamage))
 end
 
 -- Kết thúc match và tính MVP
 local function endMatch(winnerTeam)
-	print("[MVP] ========== END MATCH ==========")
-	print("[MVP] winnerTeam: " .. tostring(winnerTeam))
-	print("[MVP] playerStats count: " .. tostring(next(playerStats) and "not empty" or "EMPTY"))
 	
 	-- Debug: In tất cả playerStats
 	for name, stats in pairs(playerStats) do
@@ -357,7 +312,6 @@ local function endMatch(winnerTeam)
 			["[BOT] Shadow1"] = {kills = 3, baseDamage = 100, team = winnerTeam or "Team1", isBot = true},
 			["[BOT] Shadow2"] = {kills = 2, baseDamage = 50, team = winnerTeam == "Team1" and "Team2" or "Team1", isBot = true},
 		}
-		print("[MVP] Created dummy data for testing")
 	end
 	
 	local mvp = findMVP()
@@ -375,8 +329,6 @@ local function endMatch(winnerTeam)
 		loserMVP = team1MVP
 	end
 	
-	print("[MVP] winnerMVP: " .. (winnerMVP and winnerMVP.name or "nil"))
-	print("[MVP] loserMVP: " .. (loserMVP and loserMVP.name or "nil"))
 	
 	-- KIỂM TRA NẾU KHÔNG CÓ MVP - TẠO DUMMY
 	if not winnerMVP then
@@ -421,13 +373,11 @@ local function endMatch(winnerTeam)
 	
 	-- Gửi MVP announcement cho tất cả players với format mới
 	local playerCount = #Players:GetPlayers()
-	print("[MVP] Players online: " .. playerCount)
 	
 	if playerCount == 0 then
 		warn("[MVP] ⚠️ No players online! MVP UI will not be displayed.")
 	else
 		for _, player in ipairs(Players:GetPlayers()) do
-			print("[MVP] Firing MVPAnnouncement to: " .. player.Name)
 			MVPAnnouncement:FireClient(player, {
 				winnerTeam = winnerTeam,
 				winnerMVP = winnerMVP,
@@ -438,10 +388,8 @@ local function endMatch(winnerTeam)
 				allStats = playerStats
 			})
 		end
-		print("[MVP] Đã gửi MVPAnnouncement cho " .. playerCount .. " players")
 	end
 	
-	print("[MVP] ========== END END MATCH ==========")
 	return mvp
 end
 
@@ -452,7 +400,6 @@ end
 
 -- ========== TEST FUNCTION ==========
 local function testMVP()
-	print("[MVP TEST] ========== BẮT ĐẦU TEST MVP ==========")
 	
 	-- Tạo test data
 	playerStats = {
@@ -461,31 +408,21 @@ local function testMVP()
 		["[BOT] Shadow1"] = {kills = 2, baseDamage = 100, team = "Team1", isBot = true},
 	}
 	
-	print("[MVP TEST] playerStats created:")
 	for name, stats in pairs(playerStats) do
-		print(string.format("  %s: kills=%d, baseDamage=%d, team=%s", name, stats.kills, stats.baseDamage, stats.team))
 	end
 	
 	local winnerTeam = "Team1"
 	local mvp = findMVP()
 	local team1MVP, team2MVP = findTeamMVPs()
 	
-	print("[MVP TEST] MVP found: " .. (mvp and mvp.name or "nil"))
-	print("[MVP TEST] Team1 MVP: " .. (team1MVP and team1MVP.name or "nil"))
-	print("[MVP TEST] Team2 MVP: " .. (team2MVP and team2MVP.name or "nil"))
 	
 	local winnerMVP = team1MVP
 	local loserMVP = team2MVP
 	
-	print("[MVP TEST] Firing MVPAnnouncement to all players...")
-	print("[MVP TEST] Winner: " .. (winnerMVP and winnerMVP.name or "N/A"))
-	print("[MVP TEST] Loser: " .. (loserMVP and loserMVP.name or "N/A"))
 	
 	local playerCount = #Players:GetPlayers()
-	print("[MVP TEST] Players online: " .. playerCount)
 	
 	for _, player in ipairs(Players:GetPlayers()) do
-		print("[MVP TEST] Firing to: " .. player.Name)
 		MVPAnnouncement:FireClient(player, {
 			winnerTeam = winnerTeam,
 			winnerMVP = winnerMVP,
@@ -497,7 +434,6 @@ local function testMVP()
 		})
 	end
 	
-	print("[MVP TEST] ========== KẾT THÚC TEST MVP ==========")
 	return "MVP test fired to " .. playerCount .. " players!"
 end
 
@@ -515,7 +451,5 @@ MVPSystem.InitPlayerStats = initPlayerStats -- Thêm hàm public để khởi t�
 
 _G.MVPSystem = MVPSystem
 
-print("[MVP] Đã khởi động thành công!")
-print("[MVP] Để test MVP display, chạy: _G.MVPSystem.TestMVP()")
 
 return MVPSystem

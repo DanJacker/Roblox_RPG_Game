@@ -52,7 +52,6 @@ local function addKill(teamName)
         killEvent:FireClient(player, team1Kills, team2Kills)
     end
     
-    print("[GameManager] Team1: " .. team1Kills .. " kills | Team2: " .. team2Kills .. " kills")
 end
 
 -- Hàm kiểm tra win condition
@@ -73,8 +72,6 @@ local function checkWinCondition(destroyedTeam)
         winEvent:FireClient(player, winner, team1Kills, team2Kills)
     end
     
-    print("[GameManager] 🏆 " .. winner .. " WINS! 🏆")
-    print("[GameManager] Final Score - Team1: " .. team1Kills .. " kills | Team2: " .. team2Kills .. " kills")
 end
 
 -- Lắng nghe khi player join
@@ -86,7 +83,6 @@ Players.PlayerAdded:Connect(function(player)
         player.Neutral = false
     end
     
-    print("[GameManager] " .. player.Name .. " đã vào lobby")
     
     -- Lắng nghe khi character spawn
     player.CharacterAdded:Connect(function(character)
@@ -162,4 +158,3 @@ end
 -- Setup bases
 setupBases()
 
-print("[GameManager] ✅ Game Manager đã khởi động!")

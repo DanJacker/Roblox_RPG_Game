@@ -2,7 +2,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-print("[HealthBarManager] Khởi động...")
 
 -- Cấu hình
 local CONFIG = {
@@ -106,7 +105,6 @@ local function createHealthBar(character, isBot, isMonster, teamName)
         maxHealth = humanoid.MaxHealth
     }
     
-    print("[HealthBarManager] Đã tạo thanh máu cho: " .. character.Name)
 end
 
 -- Cập nhật thanh máu
@@ -142,7 +140,6 @@ local function updateHealthBars()
                     data.healthBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
                 end
                 
-                print("[HealthBarManager] Updated " .. name .. ": " .. string.format("%.0f", healthPercent * 100) .. "% HP")
             end
             
             -- Xử lý khi chết
@@ -205,9 +202,6 @@ scanAndCreateHealthBars()
 -- Cập nhật thanh máu mỗi frame
 RunService.Heartbeat:Connect(updateHealthBars)
 
-print("[HealthBarManager] Đã khởi động thành công!")
-print("[HealthBarManager] Đang theo dõi bot và monster mới...")
-print("[HealthBarManager] Health bars in table: " .. #healthBars)
 
 -- Debug: In ra số lượng health bars
 spawn(function()
@@ -216,6 +210,5 @@ spawn(function()
         for _ in pairs(healthBars) do
             count = count + 1
         end
-        print("[HealthBarManager] Active health bars: " .. count)
     end
 end)

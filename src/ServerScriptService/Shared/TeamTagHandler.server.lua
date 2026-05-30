@@ -41,13 +41,11 @@ local function onPlayerAdded(player)
 	
 	-- Lắng nghe thay đổi team
 	local teamConnection = player:GetPropertyChangedSignal("Team"):Connect(function()
-		print("[TeamTag] Team changed for " .. player.Name .. " -> " .. (player.Team and player.Team.Name or "nil"))
 		if player.Character then
 			TeamTagManager.UpdateNameTag(player, player.Character)
 		end
 	end)
 	table.insert(playerConnections[player.UserId], teamConnection)
-	print("[TeamTag] Connected team change listener for " .. player.Name)
 	
 	-- Xử lý character hiện tại
 	if player.Character then
@@ -81,5 +79,3 @@ Players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
-print("[TeamTagHandler] Đã khởi động!")
-print("[TeamTagHandler] Team1: Xanh dương, Team2: Đỏ, Lobby: Xanh lá")

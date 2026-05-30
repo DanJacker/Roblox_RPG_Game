@@ -61,7 +61,6 @@ end
 -- X?a t?m cache base (duplicate); kh?ng reset currentMatchId ? tr?nh m?t tr?ng th?i khi g?i gi?a setupBasesForMatch
 local function clearDuplicateBases()
 	currentMatchBases = {Team1 = {}, Team2 = {}}
-	print("[BaseSetup] ClearDuplicateBases - reset cache bases")
 	return 0
 end
 
@@ -91,19 +90,16 @@ end
 local function setupBasesForMatch(matchId, matchData)
 	-- Ki?m tra n?u d? setup cho match n?y r?i
 	if currentMatchId == matchId then
-		print("[BaseSetup] Match " .. matchId .. " d? du?c setup, b? qua...")
 		return currentMatchBases
 	end
 
 	-- Ngan ch?n duplicate setup (ch? cho ph?p 1 setup m?i 10 gi?y)
 	if isSettingUp or (tick() - lastSetupTime) < 10 then
-		print("[BaseSetup] ?ang setup ho?c v?a setup xong, b? qua...")
 		return currentMatchBases
 	end
 
 	isSettingUp = true
 	currentMatchId = matchId
-	print("[BaseSetup] B?t d?u thi?t l?p base cho match " .. matchId)
 
 	-- Reset cache base; khong goi ClearAllBots ? Matchmaking co the da spawn bot truoc StartMatch
 	clearDuplicateBases()
@@ -126,9 +122,6 @@ local function setupBasesForMatch(matchId, matchData)
 	local team1Total = playersPerTeam
 	local team2Total = playersPerTeam
 
-	print(string.format("[BaseSetup] Mode: %s - M?i team %d ngu?i", mode, playersPerTeam))
-	print(string.format("[BaseSetup] Team1: %d players, %d bot san co, can them %d (muc tieu %d)", team1Players, team1BotsAlive, team1BotsNeeded, team1Total))
-	print(string.format("[BaseSetup] Team2: %d players, %d bot san co, can them %d (muc tieu %d)", team2Players, team2BotsAlive, team2BotsNeeded, team2Total))
 
 	local team1Base = findArenaBase("Team1Base")
 	local team2Base = findArenaBase("Team2Base")
@@ -164,11 +157,9 @@ local function setupBasesForMatch(matchId, matchData)
 	
 	-- QUAN TRỌNG: Chỉ spawn bot khi có ít nhất 1 player thật
 	if totalRealPlayers == 0 then
-		print("[BaseSetup] KHÔNG CÓ PLAYER NÀO - KHÔNG spawn bot!")
 		team1BotsNeeded = 0
 		team2BotsNeeded = 0
 	elseif totalRealPlayers >= totalNeeded then
-		print(string.format("[BaseSetup] Đã có %d player thật (cần %d), KHÔNG spawn bot!", totalRealPlayers, totalNeeded))
 		team1BotsNeeded = 0
 		team2BotsNeeded = 0
 	else
@@ -177,13 +168,10 @@ local function setupBasesForMatch(matchId, matchData)
 		if team1Players > 0 and team2Players == 0 then
 			team1BotsNeeded = 0
 			team2BotsNeeded = playersPerTeam - team2BotsAlive
-			print(string.format("[BaseSetup] Team1 có %d player -> Chỉ spawn %d bot cho Team2", team1Players, team2BotsNeeded))
 		elseif team2Players > 0 and team1Players == 0 then
 			team2BotsNeeded = 0
 			team1BotsNeeded = playersPerTeam - team1BotsAlive
-			print(string.format("[BaseSetup] Team2 có %d player -> Chỉ spawn %d bot cho Team1", team2Players, team1BotsNeeded))
 		else
-			print(string.format("[BaseSetup] Cần spawn bot: Team1=%d, Team2=%d", team1BotsNeeded, team2BotsNeeded))
 		end
 	end
 	-- ==============================================
@@ -191,16 +179,12 @@ local function setupBasesForMatch(matchId, matchData)
 	-- ========== TẮT BOT SPAWN Ở ĐÂY ==========
 	-- Bot spawning đã được xử lý bởi MatchmakingService
 	-- Không spawn bot ở đây để tránh duplicate
-	print("[BaseSetup] Bot spawning được xử lý bởi MatchmakingService")
-	print(string.format("[BaseSetup] Team1 cần %d bot, Team2 cần %d bot (sẽ được spawn bởi MatchmakingService)", team1BotsNeeded, team2BotsNeeded))
 	-- ===========================================
 
 	-- Reset flag
 	isSettingUp = false
-	print("[BaseSetup] Hoàn thành setup base")
 
 	lastSetupTime = tick()
-	print(string.format("[BaseSetup] ?? t?o %d bases cho Team1, %d bases cho Team2", #currentMatchBases.Team1, #currentMatchBases.Team2))
 
 	return currentMatchBases
 end
@@ -222,8 +206,5 @@ if originalStartMatch then
 			setupBasesForMatch(matchId, matchData)
 		end)
 	end
-	print("[BaseSetup] ?? hook v?o MatchManager.StartMatch")
 end
 
-print("[BaseSetup] Base Setup Manager d? du?c t?i!")
-print("[BaseSetup] S? d?ng: _G.SetupBasesForMatch(matchId, matchData)")

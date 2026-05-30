@@ -2,7 +2,6 @@
 -- Dat ModuleScript nay trong: ServerScriptService.Arena.BotManager1v1
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-print("[BotManager1v1] Khoi dong...")
 local CONFIG = {
 	DETECTION_RANGE = 85,
 	ATTACK_RANGE = 8,
@@ -388,7 +387,6 @@ local function attack(botData, target)
 				-- Ghi nhận kill cho MVP System
 				if _G.MVPSystem and _G.MVPSystem.RecordKill then
 					_G.MVPSystem.RecordKill(botData.name, target.instance.Name)
-					print("[BotManager1v1] MVP RecordKill: " .. botData.name .. " killed " .. target.instance.Name)
 				end
 			end
 		end
@@ -411,7 +409,6 @@ local function attack(botData, target)
 				-- Ghi nhận kill cho MVP System
 				if _G.MVPSystem and _G.MVPSystem.RecordKill then
 					_G.MVPSystem.RecordKill(botData.name, target.instance.Name)
-					print("[BotManager1v1] MVP RecordKill: " .. botData.name .. " killed " .. target.instance.Name)
 				end
 			end
 		end
@@ -593,10 +590,8 @@ local function updateAI(botData)
 		if base.distance <= CONFIG.BASE_ATTACK_RANGE then
 			botData.state = "attacking_base"
 			attack(botData, base)
-			print(string.format("[BotManager1v1] %s đang ĐÁNH BASE %s (dist=%.1f)", botData.name, base.instance.Name, base.distance))
 		else
 			moveTo(botData, approachPointToward(base, hrp))
-			print(string.format("[BotManager1v1] %s đang DI CHUYỂN ĐẾN BASE %s (dist=%.1f)", botData.name, base.instance.Name, base.distance))
 		end
 		return
 	end
@@ -673,7 +668,6 @@ local function updateAI(botData)
 			end
 			
 			moveTo(botData, approachPos)
-			print(string.format("[BotManager1v1] %s dang DI CHUY?N ??N BASE ??CH %s", botData.name, enemyBase.Name))
 		else
 			-- Fallback: patrol ng?u nhi?n ?? t?m base ??ch
 			botData.state = "patrolling"
@@ -751,19 +745,16 @@ local function spawnBot(teamName, spawnPos)
 	local maxWait = 5
 	local waited = 0
 	while not (_G.MVPSystem and _G.MVPSystem.InitPlayerStats) and waited < maxWait do
-		print("[BotManager1v1] Đợi MVPSystem... (" .. waited .. "s)")
 		task.wait(0.5)
 		waited = waited + 0.5
 	end
 	
 	if _G.MVPSystem and _G.MVPSystem.InitPlayerStats then
 		_G.MVPSystem.InitPlayerStats(name, teamName)
-		print("[BotManager1v1] Đã khởi tạo MVP stats cho bot: " .. name .. " (Team: " .. teamName .. ")")
 	else
 		warn("[BotManager1v1] MVPSystem không sẵn sàng sau " .. maxWait .. "s, không thể khởi tạo stats cho bot: " .. name)
 	end
 	
-	print(string.format("[BotManager1v1] Spawned: %s (Team: %s)", name, teamName))
 	return botData
 end
 local BotManager1v1 = {}
@@ -811,5 +802,4 @@ RunService.Heartbeat:Connect(function(deltaTime)
 	end
 end)
 _G.BotManager1v1 = BotManager1v1
-print("[BotManager1v1] San sang.")
 return BotManager1v1

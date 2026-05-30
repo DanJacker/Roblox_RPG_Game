@@ -157,4 +157,3 @@ Players.PlayerRemoving:Connect(function(player)
     cooldowns[player] = nil
 end)
 
-print("Fireball System loaded!")

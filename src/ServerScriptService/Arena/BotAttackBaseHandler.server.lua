@@ -1,7 +1,6 @@
 -- BotAttackBaseHandler - Xu ly khi bot tan cong base
 -- ServerScriptService.Arena.BotAttackBaseHandler
 
-print("[BotAttackBaseHandler] Khoi dong...")
 
 -- ========== FUNCTION: BOT ATTACK BASE ==========
 -- Function nay duoc goi khi bot tan cong base
@@ -29,7 +28,6 @@ local function botAttackBase(baseModel, defendingTeam, attackerName, attackerTea
 	
 	-- Kiem tra neu base bi huy
 	if baseHumanoid.Health <= 0 then
-		print(string.format("[BotAttackBaseHandler] %s da bi HUY BOI %s (%s)!", baseModel.Name, attackerName, attackerTeam))
 		
 		-- Thong bao cho MatchEndConditions
 		if _G.MatchEndConditions and _G.MatchEndConditions.RecordBaseDestroyed then
@@ -41,4 +39,3 @@ end
 -- ========== EXPORT ==========
 _G.BotAttackBase = botAttackBase
 
-print("[BotAttackBaseHandler] San sang! Bot co the tan cong base.")

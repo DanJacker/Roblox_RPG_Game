@@ -161,7 +161,6 @@ local function updateHealthBar(baseModel, teamName)
 end
 
 local function hideBase(baseModel)
-	print("[BaseDamage] Hiding base: " .. baseModel.Name)
 	local humanoid = baseModel:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		humanoid.MaxHealth = 100
@@ -192,11 +191,9 @@ local function hideBase(baseModel)
 			child.Enabled = false
 		end
 	end
-	print("[BaseDamage] Base hidden successfully: " .. baseModel.Name)
 end
 
 local function showBase(baseModel, teamName)
-	print("[BaseDamage] Showing base: " .. baseModel.Name)
 	local tower = baseModel:FindFirstChild("Tower")
 	if tower then
 		restoreTowerVisual(tower)
@@ -222,7 +219,6 @@ local function showBase(baseModel, teamName)
 		humanoid.MaxHealth = 100
 		humanoid.Health = 100
 	end
-	print("[BaseDamage] Base shown successfully: " .. baseModel.Name)
 end
 
 local function getMapContainer(model)
@@ -245,11 +241,9 @@ local function checkBaseDestroyed(baseModel, teamName)
 			if h > 0 then remainingBases = remainingBases + 1 end
 		end
 	end
-	print("[BaseDamage] " .. teamName .. " còn " .. remainingBases .. " bases")
 	if remainingBases == 0 and not gameEnded then
 		gameEnded = true
 		local winnerTeam = teamName == "Team1" and "Team2" or "Team1"
-		print("[BaseDamage] " .. winnerTeam .. " WINS! (All bases destroyed)")
 		local matchId = _G.GetCurrentMatchId and _G.GetCurrentMatchId()
 		if matchId and _G.EndMatch then
 			_G.EndMatch(matchId, winnerTeam .. "_wins_base_destroyed")
@@ -281,18 +275,15 @@ local function onBaseAttacked(baseModel, teamName, player)
 	print(string.format("[BaseDamage] %s đang đánh base %s (Base team: %s, Player team: %s)", 
 		player.Name, baseModel.Name, teamName, playerTeamName or "nil"))
 	if not playerTeamName or playerTeamName == "Lobby" then
-		print("[BaseDamage] " .. player.Name .. " không có team hợp lệ!")
 		return
 	end
 	local isEnemy = (teamName == "Team1" and playerTeamName == "Team2") or
 		(teamName == "Team2" and playerTeamName == "Team1")
 	if not isEnemy then
-		print("[BaseDamage] " .. player.Name .. " không thể đánh base của team mình!")
 		return
 	end
 	local currentHealth = getBaseHealthByModel(baseModel, teamName)
 	if currentHealth <= 0 then
-		print(string.format("[BaseDamage] Base %s đã bị phá hủy, bỏ qua damage!", baseModel.Name))
 		return
 	end
 	currentHealth = currentHealth - BASE_DAMAGE
@@ -305,10 +296,8 @@ local function onBaseAttacked(baseModel, teamName, player)
 	if _G.MVPSystem then
 		_G.MVPSystem.RecordBaseDamage(player.Name, BASE_DAMAGE)
 	end
-	print("[BaseDamage] " .. player.Name .. " đã đánh " .. baseModel.Name .. "! HP: " .. math.floor(currentHealth))
 	updateHealthBar(baseModel, teamName)
 	if currentHealth <= 0 and not gameEnded then
-		print("[BaseDamage] " .. baseModel.Name .. " đã bị phá hủy bởi " .. player.Name .. "!")
 		setBaseHealthByModel(baseModel, teamName, 0)
 		local tower = baseModel:FindFirstChild("Tower")
 		if tower then
@@ -337,7 +326,6 @@ local function setupBaseClick(baseModel, teamName)
 	clickDetector.MouseClick:Connect(function(player)
 		onBaseAttacked(baseModel, teamName, player)
 	end)
-	print("[BaseDamage] Đã thiết lập click detector cho " .. baseModel.Name)
 end
 
 local function setupBaseTouch(baseModel, teamName)
@@ -383,11 +371,9 @@ local function setupBaseTouch(baseModel, teamName)
 					if _G.MVPSystem then
 						_G.MVPSystem.RecordBaseDamage(character.Name, BASE_DAMAGE)
 					end
-					print("[BaseDamage] Bot " .. character.Name .. " đã đánh " .. baseModel.Name .. "! HP: " .. math.floor(currentHealth))
 					updateHealthBar(baseModel, teamName)
 					flashTowerDamage(tower)
 					if currentHealth <= 0 and not gameEnded then
-						print("[BaseDamage] " .. baseModel.Name .. " đã bị phá hủy bởi bot " .. character.Name .. "!")
 						setBaseHealthByModel(baseModel, teamName, 0)
 						tower.Anchored = true
 						tower.Color = Color3.new(1, 0, 0)
@@ -404,17 +390,14 @@ local function setupBaseTouch(baseModel, teamName)
 			end
 		end
 	end)
-	print("[BaseDamage] Đã thiết lập touch detector cho " .. baseModel.Name)
 end
 
 local function setupAllBases()
-	print("[BaseDamage] setupAllBases: Searching for bases...")
 	local foundBases = 0
 	for _, obj in pairs(workspace:GetDescendants()) do
 		if obj:IsA("Model") then
 			if string.find(obj.Name, "Team1Base") then
 				foundBases = foundBases + 1
-				print("[BaseDamage] Found Team1Base: " .. obj.Name .. " at " .. obj:GetFullName())
 				setupBaseClick(obj, "Team1")
 				setupBaseTouch(obj, "Team1")
 				updateOwnerLabel(obj, "Team1")
@@ -424,7 +407,6 @@ local function setupAllBases()
 				end
 			elseif string.find(obj.Name, "Team2Base") then
 				foundBases = foundBases + 1
-				print("[BaseDamage] Found Team2Base: " .. obj.Name .. " at " .. obj:GetFullName())
 				setupBaseClick(obj, "Team2")
 				setupBaseTouch(obj, "Team2")
 				updateOwnerLabel(obj, "Team2")
@@ -437,7 +419,6 @@ local function setupAllBases()
 	end
 	local baseCount = 0
 	for _ in pairs(multiBaseHealth) do baseCount = baseCount + 1 end
-	print("[BaseDamage] setupAllBases complete. Found " .. tostring(foundBases) .. " bases, initialized " .. tostring(baseCount) .. " health entries")
 end
 
 local function botAttackBase(baseModel, teamName, botName, botTeam, damage)
@@ -453,9 +434,7 @@ local function botAttackBase(baseModel, teamName, botName, botTeam, damage)
 	if tower then flashTowerDamage(tower) end
 	if _G.MatchEndConditions then _G.MatchEndConditions.RecordBaseDamage(botTeam, damage) end
 	if _G.MVPSystem then _G.MVPSystem.RecordBaseDamage(botName, damage) end
-	print(string.format("[BaseDamage] Bot %s hit %s! HP: %d", botName, baseModel.Name, math.floor(currentHealth)))
 	if currentHealth <= 0 and not gameEnded then
-		print("[BaseDamage] " .. baseModel.Name .. " destroyed by bot " .. botName)
 		setBaseHealthByModel(baseModel, teamName, 0)
 		if tower then
 			tower.Color = Color3.new(1, 0, 0)
@@ -549,7 +528,6 @@ local function resetBasesState()
 			end
 		end
 	end
-	print("[BaseDamage] All bases have been reset and restored!")
 end
 _G.ResetBases = resetBasesState
 
@@ -568,7 +546,6 @@ local function init()
 			end
 		end
 	end)
-	print("[BaseDamage] Base Damage System đã được tải!")
 end
 
 init()

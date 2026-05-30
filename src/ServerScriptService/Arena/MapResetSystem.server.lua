@@ -2,7 +2,6 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 local Workspace = game:GetService("Workspace")
 
-print("[MapResetSystem] Đang khởi động...")
 
 -- ========== CẤU HÌNH ==========
 local MAPS_FOLDER = "Maps"
@@ -52,7 +51,6 @@ local function saveMapTemplates(mode)
 				originalCFrame = child:GetPivot()
 			})
 			
-			print("[MapResetSystem] Đã lưu template: " .. child.Name .. " (" .. mode .. ")")
 		elseif child:IsA("Folder") and child.Name == "Spawns" then
 			-- Lưu thông tin spawn points
 			for _, spawn in ipairs(child:GetChildren()) do
@@ -66,13 +64,11 @@ local function saveMapTemplates(mode)
 		end
 	end
 	
-	print("[MapResetSystem] Đã lưu " .. #mapStructure[mode].bases .. " bases cho " .. mode)
 	return true
 end
 
 -- ========== RESET MAP ==========
 local function resetMap(mode)
-	print("[MapResetSystem] ========== RESET MAP " .. mode .. " ==========")
 	
 	local mapFolder = getMapFolder(mode)
 	if not mapFolder then
@@ -88,7 +84,6 @@ local function resetMap(mode)
 			basesRemoved = basesRemoved + 1
 		end
 	end
-	print("[MapResetSystem] Đã xóa " .. basesRemoved .. " bases cũ")
 	
 	-- Tạo lại base từ template
 	local basesCreated = 0
@@ -148,11 +143,9 @@ local function resetMap(mode)
 			end
 			
 			basesCreated = basesCreated + 1
-			print("[MapResetSystem] Đã tạo lại: " .. newBase.Name)
 		end
 	end
 	
-	print("[MapResetSystem] Đã tạo " .. basesCreated .. " bases mới")
 	
 	-- Reset spawn points (nếu cần)
 	for _, spawnInfo in ipairs(mapStructure[mode].spawns) do
@@ -168,16 +161,13 @@ local function resetMap(mode)
 	-- Gọi BaseDamageSystem để setup lại click/touch detectors
 	if _G.ResetBases then
 		_G.ResetBases()
-		print("[MapResetSystem] Đã gọi ResetBases")
 	end
 	
-	print("[MapResetSystem] ========== RESET COMPLETE ==========")
 	return true
 end
 
 -- Reset tất cả maps
 local function resetAllMaps()
-	print("[MapResetSystem] ========== RESET ALL MAPS ==========")
 	
 	for mode, _ in pairs(baseTemplates) do
 		resetMap(mode)
@@ -193,7 +183,6 @@ local function init()
 	saveMapTemplates("2v2")
 	saveMapTemplates("3v3")
 	
-	print("[MapResetSystem] ========== KHỞI ĐỘNG THÀNH CÔNG ==========")
 end
 
 -- Export functions

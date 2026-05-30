@@ -38,4 +38,3 @@ for _, player in Players:GetPlayers() do
 	end
 end
 
-print("[GameServer] Server initialized with security module")

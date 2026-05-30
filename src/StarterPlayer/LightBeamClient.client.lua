@@ -20,7 +20,6 @@ local function fireLightBeam()
     local currentTime = tick()
     if currentTime - lastFireTime < COOLDOWN then
         local remaining = math.ceil(COOLDOWN - (currentTime - lastFireTime))
-        print("Light Beam on cooldown: " .. remaining .. "s remaining")
         return
     end
     
@@ -28,7 +27,6 @@ local function fireLightBeam()
     lightBeamRemote:FireServer("Launch")
     lastFireTime = currentTime
     
-    print("LIGHT BEAM ULTIMATE LAUNCHED!")
 end
 
 -- Handle key input
@@ -41,4 +39,3 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-print("Light Beam Client loaded! Press X to shoot ULTIMATE rainbow beam from your body.")

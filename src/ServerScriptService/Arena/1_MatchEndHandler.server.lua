@@ -2,19 +2,16 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("[MatchEndHandler] Đang khởi động...")
 
 -- Đợi MVPSystem sẵn sàng
 local maxWait = 10
 local waited = 0
 while not (_G.MVPSystem and _G.MVPSystem.EndMatch) and waited < maxWait do
-	print("[MatchEndHandler] Đợi MVPSystem... (" .. waited .. "s)")
 	task.wait(0.5)
 	waited = waited + 0.5
 end
 
 if _G.MVPSystem and _G.MVPSystem.EndMatch then
-	print("[MatchEndHandler] ✓ MVPSystem đã sẵn sàng!")
 else
 	warn("[MatchEndHandler] ⚠️ MVPSystem KHÔNG sẵn sàng sau " .. maxWait .. "s!")
 end
@@ -26,7 +23,6 @@ if not remoteEvents then
 	remoteEvents = Instance.new("Folder")
 	remoteEvents.Name = "RemoteEvents"
 	remoteEvents.Parent = ReplicatedStorage
-	print("[MatchEndHandler] Đã tạo RemoteEvents folder")
 end
 
 -- Tạo hoặc lấy VictoryAnnouncement
@@ -35,7 +31,6 @@ if not VictoryAnnouncement then
 	VictoryAnnouncement = Instance.new("RemoteEvent")
 	VictoryAnnouncement.Name = "VictoryAnnouncement"
 	VictoryAnnouncement.Parent = remoteEvents
-	print("[MatchEndHandler] Đã tạo VictoryAnnouncement RemoteEvent")
 end
 
 -- Tạo hoặc lấy MVPAnnouncement
@@ -44,7 +39,6 @@ if not MVPAnnouncement then
 	MVPAnnouncement = Instance.new("RemoteEvent")
 	MVPAnnouncement.Name = "MVPAnnouncement"
 	MVPAnnouncement.Parent = remoteEvents
-	print("[MatchEndHandler] Đã tạo MVPAnnouncement RemoteEvent")
 end
 
 -- ========== BIẾN LƯU TRỮ ==========
@@ -56,7 +50,6 @@ local playerTeams = {} -- {player = teamName}
 -- Bắt đầu match
 local function startMatch(matchData)
 	currentMatch = matchData
-	print("[MatchEndHandler] Match started: " .. matchData.matchId)
 	
 	-- Lưu team của player
 	if matchData.team1 then
@@ -80,8 +73,6 @@ end
 
 -- Kết thúc match
 local function endMatch(winnerTeam, reason)
-	print("[MatchEndHandler] ========== MATCH ENDED ==========")
-	print("[MatchEndHandler] Winner: " .. tostring(winnerTeam) .. ", Reason: " .. tostring(reason))
 	
 	-- Gọi Victory/Lost UI cho tất cả players
 	for _, player in ipairs(Players:GetPlayers()) do
@@ -93,11 +84,9 @@ local function endMatch(winnerTeam, reason)
 			playerTeam = playerTeams[player]
 		end
 		
-		print("[MatchEndHandler] " .. player.Name .. " - playerTeam: " .. tostring(playerTeam) .. ", winnerTeam: " .. tostring(winnerTeam))
 		
 		if playerTeam == winnerTeam then
 			-- Player thắng
-			print("[MatchEndHandler] " .. player.Name .. " WON! Firing VictoryAnnouncement")
 			VictoryAnnouncement:FireClient(player, {
 				winnerTeam = winnerTeam,
 				playerTeam = playerTeam,
@@ -106,7 +95,6 @@ local function endMatch(winnerTeam, reason)
 			})
 		else
 			-- Player thua
-			print("[MatchEndHandler] " .. player.Name .. " LOST! Firing VictoryAnnouncement")
 			VictoryAnnouncement:FireClient(player, {
 				winnerTeam = winnerTeam,
 				playerTeam = playerTeam,
@@ -118,11 +106,9 @@ local function endMatch(winnerTeam, reason)
 	
 	-- Đợi 1 giây để client sẵn sàng nhận MVP event
 	task.delay(1, function()
-		print("[MatchEndHandler] Firing MVPAnnouncement after 1s delay")
 		
 		-- Gọi MVPSystem.EndMatch để tính MVP thực tế
 		if _G.MVPSystem and _G.MVPSystem.EndMatch then
-			print("[MatchEndHandler] Calling MVPSystem.EndMatch to calculate real MVP")
 			_G.MVPSystem.EndMatch(winnerTeam)
 		else
 		warn("[MatchEndHandler] MVPSystem.EndMatch not available! Using fallback data")
@@ -154,7 +140,6 @@ local function endMatch(winnerTeam, reason)
 	
 	-- Sau 13 giây, cleanup (để player có thời gian xem MVP)
 	task.delay(13, function()
-		print("[MatchEndHandler] Match cleanup complete")
 		currentMatch = nil
 		playerTeams = {}
 	end)
@@ -166,4 +151,3 @@ _G.MatchEndHandler = {
 	EndMatch = endMatch
 }
 
-print("[MatchEndHandler] Đã khởi động thành công!")

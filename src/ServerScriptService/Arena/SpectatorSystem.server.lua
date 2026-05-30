@@ -128,7 +128,6 @@ local function setPlayerSpectator(player, teamName)
 		team = teamName
 	})
 	
-	print("[Spectator] " .. player.Name .. " đã trở thành spectator (" .. teamName .. ")")
 end
 
 -- Kiểm tra nếu player là spectator
@@ -168,7 +167,6 @@ local function resetAllSpectators()
 		end
 	end
 	playerSpectatorStatus = {}
-	print("[Spectator] Đã reset tất cả spectator status")
 end
 
 -- Lắng nghe character added
@@ -201,4 +199,3 @@ _G.IsPlayerSpectator = isPlayerSpectator
 _G.ResetSpectatorStatus = resetSpectatorStatus
 _G.ResetAllSpectators = resetAllSpectators
 
-print("[Spectator] Spectator System đã được tải!")

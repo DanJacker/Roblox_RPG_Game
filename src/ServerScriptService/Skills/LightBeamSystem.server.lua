@@ -277,4 +277,3 @@ Players.PlayerRemoving:Connect(function(player)
     cooldowns[player] = nil
 end)
 
-print("Light Beam System loaded! (Ultimate - shoots from body)")

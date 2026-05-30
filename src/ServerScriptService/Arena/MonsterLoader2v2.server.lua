@@ -5,11 +5,9 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("[MonsterLoader2v2] Khoi dong...")
 
 -- ========== REQUIRE MODULE ==========
 local MonsterManager2v2 = require(script.Parent:WaitForChild("MonsterManager2v2"))
-print("[MonsterLoader2v2] MonsterManager2v2 da duoc load!")
 
 -- ========== CONFIG ==========
 -- Vi tri spawn quai trong map 2v2 (8 vi tri)
@@ -45,12 +43,10 @@ local function spawnMonsters()
 		MonsterManager2v2.SpawnMonster(pos)
 	end
 
-	print(string.format("[MonsterLoader2v2] Da spawn %d quai vat!", #MONSTER_SPAWN_POSITIONS))
 end
 
 local function clearMonsters()
 	MonsterManager2v2.ClearAllMonsters()
-	print("[MonsterLoader2v2] Da xoa tat ca quai vat")
 end
 
 -- ========== LANG NGHE MATCH START/END ==========
@@ -63,12 +59,10 @@ local function hookMatchSystem()
 			originalStartMatch(matchId, matchData)
 			
 			if matchData and matchData.mode == "2v2" then
-				print("[MonsterLoader2v2] Tran 2v2 bat dau, se spawn quai sau " .. SPAWN_DELAY .. " giay...")
 				isMatchActive = true
 				task.delay(SPAWN_DELAY, spawnMonsters)
 			end
 		end
-		print("[MonsterLoader2v2] Da hook vao StartMatch")
 	end
 	
 	-- Lang nghe khi EndMatch duoc goi
@@ -76,13 +70,11 @@ local function hookMatchSystem()
 	if originalEndMatch then
 		_G.EndMatch = function(matchId, reason)
 			if isMatchActive then
-				print("[MonsterLoader2v2] Tran dau ket thuc, xoa quai vat...")
 				isMatchActive = false
 				clearMonsters()
 			end
 			originalEndMatch(matchId, reason)
 		end
-		print("[MonsterLoader2v2] Da hook vao EndMatch")
 	end
 end
 
@@ -94,4 +86,3 @@ hookMatchSystem()
 _G.Spawn2v2Monsters = spawnMonsters
 _G.Clear2v2Monsters = clearMonsters
 
-print("[MonsterLoader2v2] San sang! Se spawn quai khi tran 2v2 bat dau.")

@@ -19,4 +19,3 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-print("[MatchEndHelpClient] Nhấn phím H để mở/đóng hướng dẫn!")

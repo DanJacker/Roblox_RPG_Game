@@ -161,7 +161,6 @@ bossEvent.OnClientEvent:Connect(function(data)
 	
 	if event == "BossSpawned" then
 		-- Hiển thị thông báo CHỈ khi boss xuất hiện
-		print("[BossClient] Elite Boss đã xuất hiện!")
 		
 		-- Reset text
 		titleText.Text = "👑 ELITE BOSS ĐÃ XUẤT HIỆN! 👑"
@@ -216,7 +215,6 @@ bossEvent.OnClientEvent:Connect(function(data)
 		
 	elseif event == "BossDefeated" then
 		-- Thông báo boss bị tiêu diệt
-		print("[BossClient] Elite Boss đã bị tiêu diệt!")
 		
 		titleText.Text = "🎉 ELITE BOSS ĐÃ BỊ TIÊU DIỆT! 🎉"
 		subtitleText.Text = "Phần thưởng đã được phân phối!"
@@ -259,4 +257,3 @@ bossEvent.OnClientEvent:Connect(function(data)
 	end
 end)
 
-print("[BossClient] Đã khởi động!")

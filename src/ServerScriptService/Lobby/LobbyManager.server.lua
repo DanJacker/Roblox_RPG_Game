@@ -44,13 +44,11 @@ local function addToLobby(player)
         player.Neutral = false
     end
     
-    print("[LobbyManager] " .. player.Name .. " đã vào lobby")
 end
 
 -- Xóa player khỏi lobby
 local function removeFromLobby(player)
     playersInLobby[player.UserId] = nil
-    print("[LobbyManager] " .. player.Name .. " đã rời lobby")
 end
 
 -- Lấy thông tin lobby
@@ -93,5 +91,3 @@ _G.LobbyManager = {
     removeFromLobby = removeFromLobby
 }
 
-print("[LobbyManager] ✅ Đã khởi động!")
-print("[LobbyManager] Quản lý player trong Lobby (không trong trận)")

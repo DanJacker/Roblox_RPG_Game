@@ -46,7 +46,6 @@ function TeamTagManager.UpdateNameTag(player, character)
 		end
 	end
 	
-	print("[TeamTag] " .. player.Name .. " -> " .. teamName .. " (" .. tostring(teamColor) .. ")")
 end
 
 -- Hàm tạo name tag cho character

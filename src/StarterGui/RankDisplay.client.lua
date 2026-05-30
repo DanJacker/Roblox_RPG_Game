@@ -281,7 +281,6 @@ task.spawn(function()
     local RequestRankUpdate = ReplicatedStorage:FindFirstChild("RemoteEvents") and ReplicatedStorage.RemoteEvents:FindFirstChild("RequestRankUpdate")
     if RequestRankUpdate then
         RequestRankUpdate:FireServer()
-        print("[RankDisplay] Đã yêu cầu rank info từ server")
     end
 end)
 
@@ -295,4 +294,3 @@ MatchTimer.OnClientEvent:Connect(function(data)
 	end
 end)
 
-print("[RankDisplay] Đã tải!")

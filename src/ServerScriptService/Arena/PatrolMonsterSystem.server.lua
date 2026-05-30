@@ -405,7 +405,6 @@ function PatrolMonster.Spawn(opts)
 		active[char] = nil
 	end)
 
-	print("[PatrolMonster] Spawn:", char.Name, "zoneR=", zoneR, "patrolR=", patrolR)
 	return char
 end
 
@@ -430,6 +429,5 @@ end)
 
 _G.PatrolMonster = PatrolMonster
 
-print('[PatrolMonster] OK. Test: _G.PatrolMonster.Spawn({ zoneCenter = Vector3.new(0,4,0), zoneRadius = 40, patrolRadius = 18, displayName = "Creep" })')
 
 return PatrolMonster

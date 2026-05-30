@@ -85,7 +85,6 @@ local function createArena(matchId, mode, players)
         end
     end
     
-    print("[ArenaManager] Đã tạo arena " .. matchId .. " (" .. mode .. ")")
     return arenaData
 end
 
@@ -100,7 +99,6 @@ local function destroyArena(matchId)
     end
     
     activeArenas[matchId] = nil
-    print("[ArenaManager] Đã hủy arena " .. matchId)
 end
 
 -- Teleport player đến arena spawn
@@ -112,7 +110,6 @@ local function teleportToArenaSpawn(player, teamName, mode)
     
     if player.Character then
         player.Character:PivotTo(spawnCFrame)
-        print("[ArenaManager] Đã teleport " .. player.Name .. " đến " .. teamName .. " spawn")
     end
 end
 
@@ -127,5 +124,3 @@ _G.ArenaManager = {
     ARENA_CONFIG = ARENA_CONFIG
 }
 
-print("[ArenaManager] ✅ Đã khởi động!")
-print("[ArenaManager] Hỗ trợ: 1v1, 2v2, 3v3")

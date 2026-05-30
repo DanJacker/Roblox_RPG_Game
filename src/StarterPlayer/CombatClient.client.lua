@@ -31,7 +31,6 @@ local animationsFolder = ReplicatedStorage:WaitForChild("Animations")
 local basicAttackAnim = animationsFolder:WaitForChild("Basicattack")
 local effectsFolder = ReplicatedStorage:FindFirstChild("Effects")
 
-print("[CombatClient] Animation loaded: " .. basicAttackAnim.AnimationId)
 
 -- ========== HÀM CHÍNH ==========
 
@@ -120,11 +119,9 @@ local function playAttackAnimation()
 	if not animator then
 		animator = Instance.new("Animator")
 		animator.Parent = humanoid
-		print("[CombatClient] Created new Animator")
 	end
 	
 	
-	print("[CombatClient] Playing animation: " .. basicAttackAnim.AnimationId)
 	
 	-- Dừng animation cũ nếu có
 	if attackTrack then
@@ -137,7 +134,6 @@ local function playAttackAnimation()
 		attackTrack.Priority = Enum.AnimationPriority.Action
 		attackTrack.Looped = false
 		attackTrack:Play()
-		print("[CombatClient] Animation track length: " .. tostring(attackTrack.Length))
 	end)
 	
 	if not success then
@@ -149,7 +145,6 @@ local function playAttackAnimation()
 		return false
 	end
 	
-	print("[CombatClient] Animation played successfully!")
 	
 
 	
@@ -201,7 +196,6 @@ local function findNearestTarget()
 	end
 	
 	if nearestTarget then
-		print("[CombatClient] Mục tiêu: " .. nearestTarget.Name .. " (" .. string.format("%.1f", nearestDistance) .. " studs)")
 	end
 	
 	return nearestTarget
@@ -217,7 +211,6 @@ local function dealDamage(target)
 	
 	if success then
 		lastAttackTime = tick()
-		print("[CombatClient] Đã tấn công " .. (target.Name or "unknown") .. " - " .. CONFIG.DAMAGE .. " damage")
 		return true
 	else
 		warn("[CombatClient] Lỗi gửi damage: " .. tostring(err))
@@ -230,7 +223,6 @@ local function onAttack()
 	-- Kiểm tra cooldown
 	local timeSinceLastAttack = tick() - lastAttackTime
 	if timeSinceLastAttack < CONFIG.COOLDOWN then
-		print("[CombatClient] Cooldown: " .. string.format("%.1f", CONFIG.COOLDOWN - timeSinceLastAttack) .. "s")
 		return
 	end
 	
@@ -250,7 +242,6 @@ local function onAttack()
 		-- Tạo VFX impact khi đánh trúng
 		createImpactVFX(target)
 	else
-		print("[CombatClient] Không có mục tiêu trong phạm vi " .. CONFIG.ATTACK_RANGE .. " studs")
 	end
 end
 
@@ -263,7 +254,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	end
 	
 	-- Log để debug
-	print("[CombatClient] M1 pressed!")
 	
 	-- Thực hiện tấn công
 	onAttack()
@@ -271,8 +261,3 @@ end)
 
 -- ========== KHỞI TẠO ==========
 
-print("[CombatClient] Script đã load!")
-print("[CombatClient] Animation: Basicattack (từ ReplicatedStorage.Animations)")
-print("[CombatClient] Range: " .. CONFIG.ATTACK_RANGE .. " studs")
-print("[CombatClient] Damage: " .. CONFIG.DAMAGE)
-print("[CombatClient] Cooldown: " .. CONFIG.COOLDOWN .. "s")

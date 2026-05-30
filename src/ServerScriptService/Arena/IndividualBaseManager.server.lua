@@ -2,7 +2,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("[IndividualBaseManager] Đang khởi động...")
 
 -- Lưu trữ base của mỗi player
 local playerBases = {} -- {playerName = {base = Model, team = "Team1"/"Team2", alive = true}}
@@ -111,7 +110,6 @@ local function createPlayerBase(playerName, teamName, position)
 		health = BASE_HEALTH
 	}
 	
-	print(string.format("[IndividualBaseManager] Đã tạo base cho %s (%s) tại %s", playerName, teamName, tostring(position)))
 	
 	return newBase
 end
@@ -129,7 +127,6 @@ local function onBaseAttacked(baseModel, attackerName, damage)
 	
 	-- Giảm health
 	baseData.health = baseData.health - damage
-	print(string.format("[IndividualBaseManager] %s's base bị đánh bởi %s - Còn %d HP", ownerName, attackerName, math.floor(baseData.health)))
 	
 	-- Cập nhật health bar
 	local healthBar = tower:FindFirstChild("HealthBar")
@@ -158,7 +155,6 @@ local function onBaseAttacked(baseModel, attackerName, damage)
 	-- Kiểm tra nếu base bị phá hủy
 	if baseData.health <= 0 then
 		baseData.alive = false
-		print(string.format("[IndividualBaseManager] %s's base đã bị phá hủy bởi %s!", ownerName, attackerName))
 		
 		-- Thông báo player bị loại
 		local player = Players:FindFirstChild(ownerName)
@@ -175,7 +171,6 @@ local function onBaseAttacked(baseModel, attackerName, damage)
 				SpectatorSystem.AddSpectator(player, baseData.team)
 			end
 			
-			print(string.format("[IndividualBaseManager] %s đã bị loại khỏi trận!", ownerName))
 		end
 		
 		-- Xóa base
@@ -236,12 +231,10 @@ local function initializeBasesForMatch(matchData)
 	-- Kiểm tra mode
 	if matchData.mode == "1v1" then
 		-- 1v1: Sử dụng 2 base có sẵn
-		print("[IndividualBaseManager] 1v1 mode - Sử dụng 2 base có sẵn")
 		return
 	end
 	
 	-- 2v2 hoặc 3v3: Gán player vào base có sẵn trong map
-	print(string.format("[IndividualBaseManager] %s mode - Gán player vào base có sẵn", matchData.mode))
 	
 	-- Tìm map theo mode
 	local mapsFolder = game.Workspace:FindFirstChild("Maps")
@@ -264,7 +257,6 @@ local function initializeBasesForMatch(matchData)
 		end
 	end
 	
-	print(string.format("[IndividualBaseManager] Tìm thấy %d base Team1, %d base Team2", #team1Bases, #team2Bases))
 	
 	-- Gán player vào base
 	for i, playerData in ipairs(matchData.team1) do
@@ -323,7 +315,6 @@ local function initializeBasesForMatch(matchData)
 				alive = true
 			}
 			
-			print(string.format("[IndividualBaseManager] Gán %s -> Team1 Base %d", playerData.name, i))
 		end
 	end
 	
@@ -383,11 +374,9 @@ local function initializeBasesForMatch(matchData)
 				alive = true
 			}
 			
-			print(string.format("[IndividualBaseManager] Gán %s -> Team2 Base %d", playerData.name, i))
 		end
 	end
 	
-	print(string.format("[IndividualBaseManager] Đã gán %d players cho Team1, %d players cho Team2", #matchData.team1, #matchData.team2))
 end
 
 -- Thiết lập touch detection cho tất cả bases
@@ -419,7 +408,6 @@ local function setupBaseTouchDetection()
 					debounce[attackerName] = nil
 				end)
 				
-				print("[IndividualBaseManager] Đã thiết lập touch detection cho " .. descendant.Name)
 			end
 		end
 	end)
@@ -454,6 +442,5 @@ _G.IndividualBaseManager = IndividualBaseManager
 -- Khởi tạo
 setupBaseTouchDetection()
 
-print("[IndividualBaseManager] Đã khởi động thành công!")
 
 return IndividualBaseManager

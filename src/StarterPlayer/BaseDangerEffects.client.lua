@@ -145,7 +145,6 @@ local function startDangerEffects(teamName, healthPercent)
 	isDangerActive = true
 	dangerTeam = teamName
 	
-	print("[DangerEffects] Bật hiệu ứng nguy hiểm cho " .. teamName .. " (" .. math.floor(healthPercent * 100) .. "% HP)")
 	
 	-- Thiết lập post-processing
 	setupPostProcessing()
@@ -195,7 +194,6 @@ local function stopDangerEffects()
 	isDangerActive = false
 	dangerTeam = nil
 	
-	print("[DangerEffects] Tắt hiệu ứng nguy hiểm")
 	
 	-- Hủy loop sấm sét
 	if lightningLoop then
@@ -250,18 +248,15 @@ local function setupEventListener()
 	if not dangerEvent then return end
 	
 	dangerEvent.OnClientEvent:Connect(function(teamName, healthPercent)
-		print("[DangerEffects] Nhận event từ server: " .. teamName .. " - " .. math.floor(healthPercent * 100) .. "%")
 		startDangerEffects(teamName, healthPercent)
 	end)
 	
-	print("[DangerEffects] Đã thiết lập event listener")
 end
 
 -- Khởi tạo
 local function init()
 	setupPostProcessing()
 	setupEventListener()
-	print("[DangerEffects] Client script đã khởi động!")
 end
 
 init()

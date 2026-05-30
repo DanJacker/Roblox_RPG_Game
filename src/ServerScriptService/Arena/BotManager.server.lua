@@ -3,12 +3,10 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-print("[BotManager] ========== BẮT ĐẦU KHỞI ĐỘNG ==========")
 
 -- ĐẶT BIẾN TOÀN CỤC NGAY LẬP TỨC
 local BotManager = {}
 _G.BotManager = BotManager
-print("[BotManager] ✓ Đã đặt _G.BotManager")
 
 local arenaFolder = ServerScriptService:FindFirstChild("Arena")
 
@@ -18,18 +16,15 @@ local function safeRequire(moduleName)
 	if modScript and modScript:IsA("ModuleScript") then
 		local ok, result = pcall(require, modScript)
 		if ok then
-			print("[BotManager] Đã load: " .. moduleName)
 			return result
 		else
 			warn("[BotManager] Lỗi require " .. moduleName .. ": " .. tostring(result))
 		end
 	else
-		print("[BotManager] Module " .. moduleName .. " không có sẵn")
 	end
 	return nil
 end
 
-print("[BotManager] Đang load các module...")
 
 -- Load modules (không đợi)
 local ModeManagers = {
@@ -38,11 +33,6 @@ local ModeManagers = {
 	["3v3"] = safeRequire("BotManager3v3"),
 }
 
-print("[BotManager] ========== MODULE STATUS ==========")
-print("[BotManager] BotManager1v1: " .. tostring(ModeManagers["1v1"] ~= nil))
-print("[BotManager] BotManager2v2: " .. tostring(ModeManagers["2v2"] ~= nil))
-print("[BotManager] BotManager3v3: " .. tostring(ModeManagers["3v3"] ~= nil))
-print("[BotManager] ====================================")
 
 -- Export các module ra _G
 for mode, mgr in pairs(ModeManagers) do
@@ -59,7 +49,6 @@ task.spawn(function()
 	
 	for mode, moduleName in pairs({["1v1"] = "BotManager1v1", ["2v2"] = "BotManager2v2", ["3v3"] = "BotManager3v3"}) do
 		if not ModeManagers[mode] then
-			print("[BotManager] Retrying to load " .. moduleName .. "...")
 			for i = 1, maxRetries do
 				task.wait(retryDelay)
 				local modScript = arenaFolder and arenaFolder:FindFirstChild(moduleName)
@@ -68,7 +57,6 @@ task.spawn(function()
 					if ok then
 						ModeManagers[mode] = result
 						_G["BotManager" .. mode] = result
-						print("[BotManager] ✓ Successfully loaded " .. moduleName .. " on retry " .. i)
 						break
 					else
 						warn("[BotManager] Retry " .. i .. " failed for " .. moduleName .. ": " .. tostring(result))
@@ -79,11 +67,6 @@ task.spawn(function()
 	end
 	
 	-- Print final status
-	print("[BotManager] ========== FINAL MODULE STATUS (after retries) ==========")
-	print("[BotManager] BotManager1v1: " .. tostring(ModeManagers["1v1"] ~= nil))
-	print("[BotManager] BotManager2v2: " .. tostring(ModeManagers["2v2"] ~= nil))
-	print("[BotManager] BotManager3v3: " .. tostring(ModeManagers["3v3"] ~= nil))
-	print("[BotManager] ==========================================================")
 end)
 
 -- ========== C?U H?NH M?C ??NH (FALLBACK) ==========
@@ -171,7 +154,6 @@ local function refreshBaseModelsCache(now)
 	end
 	baseModelsByEnemyTeam.Team1 = t1
 	baseModelsByEnemyTeam.Team2 = t2
-	print("[BotManager] refreshBaseModelsCache: Team1=" .. #t1 .. ", Team2=" .. #t2)
 end
 
 -- Tìm base của team trong Maps folder
@@ -515,11 +497,9 @@ local function attack(botData, target)
 		local h = target.instance.Character and target.instance.Character:FindFirstChild("Humanoid")
 		if h and h.Health > 0 then
 			h:TakeDamage(CONFIG.ATTACK_DAMAGE)
-			print(string.format("[BOT] %s d?nh %s -%d HP (C?n %d HP)", botData.name, target.instance.Name, CONFIG.ATTACK_DAMAGE, h.Health))
 
 			-- Ki?m tra n?u player ch?t -> ghi nh?n kill
 			if h.Health <= 0 then
-				print(string.format("[BOT] %s d? gi?t %s!", botData.name, target.instance.Name))
 				-- Ghi nh?n kill cho team c?a bot
 				if _G.MatchEndConditions then
 					_G.MatchEndConditions.RecordKill(
@@ -537,13 +517,11 @@ local function attack(botData, target)
 		local h = target.instance:FindFirstChild("Humanoid")
 		if h and h.Health > 0 then
 			h:TakeDamage(CONFIG.ATTACK_DAMAGE)
-			print(string.format("[BOT] %s d?nh bot %s -%d HP", botData.name, target.instance.Name, CONFIG.ATTACK_DAMAGE))
 
 			-- Ki?m tra n?u bot ch?t -> ghi nh?n kill
 			if h.Health <= 0 then
 				-- T?m t?n bot victim
 				local victimName = target.instance.Name
-				print(string.format("[BOT] %s d? gi?t bot %s!", botData.name, victimName))
 				-- Ghi nh?n kill cho team c?a bot attacker
 				local victimTeam = target.team
 				if not victimTeam and activeBots[target.instance] then
@@ -570,10 +548,8 @@ local function attack(botData, target)
 		if _G.BotAttackBase then
 			local success, msg = _G.BotAttackBase(base, teamName, botData.name, botData.team, CONFIG.BASE_ATTACK_DAMAGE)
 			if not success then
-				print("[BOT] " .. msg)
 			end
 		else
-			print("[BOT] BotAttackBase kh?ng c? s?n!")
 		end
 	end
 end
@@ -607,7 +583,6 @@ local function updateAI(botData)
 
 	-- Kiểm tra nếu bot rơi xuống void (dưới -50 studs)
 	if hrp.Position.Y < -50 then
-		print(string.format("[BOT] %s rơi xuống void, respawning...", botData.name))
 		botData.state = "dead"
 		-- Respawn bot
 		task.delay(2, function()
@@ -639,7 +614,6 @@ local function updateAI(botData)
 				if enemyNearBase.distance * enemyNearBase.distance < attackRangeSq then
 					-- Trong t?m t?n c?ng, d?nh ngay
 					attack(botData, enemyNearBase)
-					print(string.format("[BOT] %s dang B?O V? BASE, t?n c?ng %s!", botData.name, enemyNearBase.instance.Name))
 				else
 					-- Di chuy?n d?n enemy d? t?n c?ng
 					moveTo(botData, enemyNearBase.position)
@@ -657,7 +631,6 @@ local function updateAI(botData)
 	if botData.wasRetreating and shouldReturnToFight(botData) then
 		botData.wasRetreating = false
 		botData.state = "chasing"
-		print(string.format("[BOT] %s d? h?i d? HP (50%%), quay l?i t?n c?ng!", botData.name))
 		-- Ti?p t?c t?m enemy v? t?n c?ng (kh?ng return, d? code b?n du?i x? l?)
 	end
 
@@ -748,7 +721,6 @@ local function updateAI(botData)
 			local approachPos = targetPos - direction * 5
 			
 			moveTo(botData, approachPos)
-			print(string.format("[BOT] %s dang DI CHUY?N ??N BASE ??CH %s", botData.name, enemyBase.Name))
 		else
 			-- Fallback: patrol ng?u nhi?n ?? t?m base ??ch
 			botData.state = "patrolling"
@@ -800,7 +772,6 @@ local function spawnBot(teamName, spawnPos)
 	character.Parent = workspace
 
 	character:SetAttribute("Team", teamName)
-	print(string.format("[BotManager] Spawn team %s -> %s", teamName, name))
 
 	-- Anchor t?m th?i d? tr?nh roi
 	for _, part in pairs(character:GetDescendants()) do
@@ -851,7 +822,6 @@ local function spawnBot(teamName, spawnPos)
 
 	humanoid.Died:Connect(function()
 		botData.state = "dead"
-		print(string.format("[BOT] %s d? ch?t!", name))
 
 		-- Tang s? l?n ch?t
 		botDeathCounts[name] = (botDeathCounts[name] or 0) + 1
@@ -861,7 +831,6 @@ local function spawnBot(teamName, spawnPos)
 		local respawnTime = BOT_RESPAWN_TIME + (deathCount - 1) * 2
 		respawnTime = math.min(respawnTime, 15) -- T?i da 15 gi?y
 
-		print(string.format("[BOT] %s s? respawn sau %d gi?y...", name, respawnTime))
 
 		-- X? l? respawn
 		task.delay(respawnTime, function()
@@ -876,12 +845,10 @@ local function spawnBot(teamName, spawnPos)
 			if teamBase then
 				local basePos = teamBase:GetPivot().Position
 				spawnBot(teamName, basePos + Vector3.new(math.random(-10, 10), 0, math.random(-10, 10)))
-				print(string.format("[BOT] %s d? respawn!", name))
 			end
 		end)
 	end)
 
-	print(string.format("[BotManager] Spawned: %s (Team: %s) at %s", name, teamName, tostring(finalPos)))
 	return botData
 end
 
@@ -908,11 +875,8 @@ local function getManagerByMode(mode)
 		or nil
 	
 	if manager then
-		print(string.format("[BotManager] getManagerByMode(%s): Found manager", mode))
 	else
 		warn(string.format("[BotManager] getManagerByMode(%s): NO MANAGER FOUND!", mode))
-		print(string.format("[BotManager] ModeManagers[%s] = %s", mode, tostring(ModeManagers[mode])))
-		print(string.format("[BotManager] _G.BotManager%s = %s", mode, tostring(_G["BotManager" .. mode])))
 	end
 	
 	return manager
@@ -921,17 +885,13 @@ end
 -- Spawn bot theo ch? d?
 function BotManager.SpawnBotForTeam(teamName, pos, mode)
 	mode = normalizeMode(mode)
-	print(string.format("[BotManager] ========== SpawnBotForTeam =========="))
-	print(string.format("[BotManager] team=%s, mode=%s, pos=%s", teamName, mode, tostring(pos)))
 	
 	local manager = getManagerByMode(mode)
 	local botsFolder = getBotsFolderForMode(mode)
 
 	if manager then
-		print(string.format("[BotManager] ✓ Routing to BotManager%s for %s", mode, teamName))
 		local botData = manager.SpawnBotForTeam(teamName, pos)
 		moveBotCharacterToFolder(botData, botsFolder)
-		print(string.format("[BotManager] ✓ Bot spawned: %s", botData and botData.name or "FAILED"))
 		return botData
 	else
 		warn(string.format("[BotManager] ✗ KHÔNG TÌM THẤY BotManager%s! Using fallback spawn.", mode))
@@ -1016,7 +976,6 @@ function BotManager.ClearAllBots()
 	count = count + clearManager(_G.BotManager2v2)
 	count = count + clearManager(_G.BotManager3v3)
 
-	print("[BotManager] ?? x?a " .. count .. " bots t? t?t c? managers")
 	return count
 end
 
@@ -1039,7 +998,6 @@ function BotManager.SpawnBotsForMatch(teamName, count, basePositions, mode)
 				end
 			end
 		end
-		print(string.format("[BotManager] ?? spawn %d bots cho %s (mode: %s)", #spawned, teamName, mode))
 		return spawned
 	else
 		-- Fallback
@@ -1070,23 +1028,16 @@ RunService.Heartbeat:Connect(function(deltaTime)
 	end
 end)
 
-print("[BotManager] ========== KHỞI ĐỘNG THÀNH CÔNG ==========")
-print("[BotManager] SpawnBotForTeam function available: " .. tostring(BotManager.SpawnBotForTeam ~= nil))
-print("[BotManager] _G.BotManager = " .. tostring(_G.BotManager))
-print("[BotManager] ==========================================")
 
 if CONFIG.DEBUG_TEST_SPAWN then
 	task.delay(1, function()
-		print("[BotManager] DEBUG_TEST_SPAWN: thu nghiem spawn...")
 		local testBot = BotManager.SpawnBotForTeam("Team1", Vector3.new(0, 20, 0))
 		if testBot then
-			print("[BotManager] Test spawn OK: " .. tostring(testBot.name))
 			task.delay(2, function()
 				local ch = testBot.character
 				if ch and ch.Parent then
 					activeBots[ch] = nil
 					ch:Destroy()
-					print("[BotManager] Test bot da xoa")
 				end
 			end)
 		else

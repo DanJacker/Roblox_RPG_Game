@@ -69,11 +69,9 @@ local function teleportPlayerToSpawn(player, spawnPoint)
     if _G.SpawnSelectionServer then
         local customSpawnPos = _G.SpawnSelectionServer.getSpawnPosition(player.UserId)
         if customSpawnPos then
-            print("[MatchTeleporter] " .. player.Name .. " có custom spawn position: " .. tostring(customSpawnPos))
             
             -- Nếu player không có character, spawn character trước
             if not player.Character then
-                print("[MatchTeleporter] " .. player.Name .. " không có character, đang spawn...")
                 player:LoadCharacter()
                 -- Đợi character spawn
                 local startTime = tick()
@@ -84,14 +82,12 @@ local function teleportPlayerToSpawn(player, spawnPoint)
                     warn("[MatchTeleporter] " .. player.Name .. " không thể spawn character!")
                     return false
                 end
-                print("[MatchTeleporter] " .. player.Name .. " đã spawn character")
             end
             
             -- Teleport đến custom spawn position (thêm Y offset để an toàn)
             local safePos = customSpawnPos + Vector3.new(0, 3, 0)
             local spawnCFrame = CFrame.new(safePos)
             player.Character:PivotTo(spawnCFrame)
-            print("[MatchTeleporter] Đã teleport " .. player.Name .. " đến custom spawn position: " .. tostring(safePos))
             return true
         end
     end
@@ -99,7 +95,6 @@ local function teleportPlayerToSpawn(player, spawnPoint)
     -- Nếu không có custom spawn, sử dụng spawn point mặc định
     -- Nếu player không có character, spawn character trước
     if not player.Character then
-        print("[MatchTeleporter] " .. player.Name .. " không có character, đang spawn...")
         player:LoadCharacter()
         -- Đợi character spawn
         local startTime = tick()
@@ -110,14 +105,12 @@ local function teleportPlayerToSpawn(player, spawnPoint)
             warn("[MatchTeleporter] " .. player.Name .. " không thể spawn character!")
             return false
         end
-        print("[MatchTeleporter] " .. player.Name .. " đã spawn character")
     end
     
     local spawnPos = spawnPoint.Position
     local spawnCFrame = CFrame.new(spawnPos + Vector3.new(0, 3, 0))
     
     player.Character:PivotTo(spawnCFrame)
-    print("[MatchTeleporter] Đã teleport " .. player.Name .. " đến " .. spawnPoint.Name)
     
     return true
 end
@@ -126,11 +119,6 @@ end
 
 -- Teleport tất cả players trong match đến spawn points
 function TeleportPlayersToMatch(matchId, mode, team1, team2)
-    print("[MatchTeleporter] === BẮT ĐẦU TELEPORT ===")
-    print("[MatchTeleporter] Match ID: " .. matchId)
-    print("[MatchTeleporter] Mode: " .. mode)
-    print("[MatchTeleporter] Team1: " .. #team1 .. " players")
-    print("[MatchTeleporter] Team2: " .. #team2 .. " players")
     
     -- Lấy spawn points cho mỗi team
     local team1Spawns = getTeamSpawnPoints(mode, "team1")
@@ -157,7 +145,6 @@ function TeleportPlayersToMatch(matchId, mode, team1, team2)
                             if player.Character then
                                 local safePos = customSpawnPos + Vector3.new(0, 3, 0)
                                 player.Character:PivotTo(CFrame.new(safePos))
-                                print("[MatchTeleporter] " .. player.Name .. " spawn tại custom position: " .. tostring(safePos))
                             end
                         else
                             -- Sử dụng default spawn
@@ -185,7 +172,6 @@ function TeleportPlayersToMatch(matchId, mode, team1, team2)
                             if player.Character then
                                 local safePos = customSpawnPos + Vector3.new(0, 3, 0)
                                 player.Character:PivotTo(CFrame.new(safePos))
-                                print("[MatchTeleporter] " .. player.Name .. " spawn tại custom position: " .. tostring(safePos))
                             end
                         else
                             -- Sử dụng default spawn
@@ -201,8 +187,6 @@ function TeleportPlayersToMatch(matchId, mode, team1, team2)
         return
     end
     
-    print("[MatchTeleporter] Team1 spawns: " .. #team1Spawns)
-    print("[MatchTeleporter] Team2 spawns: " .. #team2Spawns)
     
     -- Lưu spawn points đang sử dụng
     activeMatchSpawns[matchId] = {
@@ -234,13 +218,11 @@ function TeleportPlayersToMatch(matchId, mode, team1, team2)
         end
     end
     
-    print("[MatchTeleporter] === KẾT THÚC TELEPORT ===")
 end
 
 -- Cleanup spawn points khi match kết thúc
 function CleanupMatchSpawns(matchId)
     activeMatchSpawns[matchId] = nil
-    print("[MatchTeleporter] Đã cleanup spawn points cho match " .. matchId)
 end
 
 -- ========== EXPORT ==========
@@ -250,5 +232,3 @@ _G.MatchTeleporter = {
     GetTeamSpawnPoints = getTeamSpawnPoints
 }
 
-print("[MatchTeleporter] ✅ Đã khởi động!")
-print("[MatchTeleporter] Hỗ trợ teleport đến 3 map: 1v1, 2v2, 3v3")

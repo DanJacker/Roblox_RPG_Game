@@ -207,4 +207,3 @@ Players.PlayerRemoving:Connect(function(player)
     cooldowns[player] = nil
 end)
 
-print("Jinx Rocket System loaded! (Press C to fire)")

@@ -52,13 +52,10 @@ end
 -- Lắng nghe sự kiện chết
 respawnEvent.OnClientEvent:Connect(function(data)
 	if data.event == "PlayerDied" then
-		print("[RespawnClient] Player died! Respawn in " .. data.respawnTime .. "s")
 		startCountdown(data.respawnTime, data.deathCount)
 	elseif data.event == "PlayerRespawned" then
-		print("[RespawnClient] Player respawned!")
 		isCountingDown = false
 		mainFrame.Visible = false
 	end
 end)
 
-print("[RespawnClient] Đã tải xong!")

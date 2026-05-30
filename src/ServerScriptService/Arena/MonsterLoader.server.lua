@@ -3,11 +3,9 @@
 
 local Players = game:GetService("Players")
 
-print("[MonsterLoader] Khoi dong...")
 
 -- ========== REQUIRE MODULE ==========
 local MonsterManager = require(script.Parent:WaitForChild("MonsterManager"))
-print("[MonsterLoader] MonsterManager da duoc load!")
 
 -- ========== CONFIG ==========
 -- Tu dong lay vi tri spawn tu MonsterPartSpawn trong map 1v1
@@ -52,7 +50,6 @@ local function spawnMonsters()
 		MonsterManager.SpawnMonster(pos)
 	end
 
-	print(string.format("[MonsterLoader] Da spawn %d quai vat tai %d vi tri MonsterPartSpawn!", #spawnPositions, #spawnPositions))
 end
 
 -- ========== KHOI DONG ==========
@@ -60,14 +57,11 @@ end
 local function checkAndSpawnMonsters()
 	local playerCount = #Players:GetPlayers()
 	if playerCount > 0 then
-		print(string.format("[MonsterLoader] Co %d player, spawn quai sau %d giay...", playerCount, SPAWN_DELAY))
 		task.delay(SPAWN_DELAY, spawnMonsters)
 	else
-		print("[MonsterLoader] Khong co player, cho player join...")
 		-- Lang nghe PlayerAdded de spawn khi co player
 		local connection
 		connection = Players.PlayerAdded:Connect(function(player)
-			print("[MonsterLoader] Player " .. player.Name .. " da join, spawn quai sau " .. SPAWN_DELAY .. " giay...")
 			task.delay(SPAWN_DELAY, function()
 				spawnMonsters()
 			end)
@@ -78,4 +72,3 @@ end
 
 checkAndSpawnMonsters()
 
-print("[MonsterLoader] San sang!")

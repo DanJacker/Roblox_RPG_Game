@@ -40,8 +40,6 @@ local function onPlayerDeath(player, killer)
 	-- Sau đó mới tăng số lần chết cho lần chết tiếp theo
 	deathCount[player.UserId] = (deathCount[player.UserId] or 0) + 1
 	
-	print(player.Name .. " died! Respawn in " .. respawnTime .. "s")
-	print("Death count: " .. deathCount[player.UserId])
 	
 	-- Ghi nhận kill cho MatchEndConditions
 	if killer and killer ~= player then
@@ -73,7 +71,6 @@ local function onPlayerDeath(player, killer)
 		-- Kiểm tra nếu character đã bị destroy
 		if not player.Character or player.Character.Parent == nil then
 			player:LoadCharacter()
-			print(player.Name .. " has respawned!")
 			
 			combatEvent:FireClient(player, {
 				event = "PlayerRespawned"
@@ -141,7 +138,6 @@ _G.OnPlayerDeath = onPlayerDeath
 -- Xử lý khi người chơi tham gia
 Players.PlayerAdded:Connect(function(player)
 	deathCount[player.UserId] = 0
-	print("Combat system initialized for " .. player.Name)
 end)
 
 -- Xử lý khi người chơi rời game
@@ -154,7 +150,3 @@ for _, player in ipairs(Players:GetPlayers()) do
 	deathCount[player.UserId] = 0
 end
 
-print("=== Combat System đã khởi động ===")
-print("- Base respawn time: " .. CONFIG.BASE_RESPAWN_TIME .. "s")
-print("- Respawn increment: +" .. CONFIG.RESPAWN_INCREMENT .. "s per death")
-print("- Max respawn time: " .. CONFIG.MAX_RESPAWN_TIME .. "s")

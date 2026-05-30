@@ -4,7 +4,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("[MatchEndConditions] Đang khởi động...")
 
 -- ========== CẤU HÌNH ==========
 -- Load config từ module
@@ -129,7 +128,6 @@ end
 local function endMatch(winner, reason)
 	if not matchStats.isActive then return end
 	
-	print(string.format("[MatchEndConditions] Kết thúc trận đấu! Winner: %s, Reason: %s", winner or "Draw", reason))
 	
 	matchStats.isActive = false
 	
@@ -154,7 +152,6 @@ local function endMatch(winner, reason)
 	
 	-- KHÔNG gọi MVPSystem ở đây nữa
 	-- MatchManager sẽ gọi MVPSystem sau khi Victory/Lost UI hiển thị xong
-	print("[MatchEndConditions] Bỏ qua MVPSystem.EndMatch - sẽ được gọi bởi MatchManager sau Victory/Lost UI")
 	
 	-- Gọi EndMatch từ MatchManager ngay lập tức
 	-- MatchManager sẽ xử lý việc hiển thị Victory/Lost UI trước (10s), rồi MVP UI
@@ -177,7 +174,6 @@ local function startMatch(matchId)
 		playerDeaths = {},
 	}
 	
-	print("[MatchEndConditions] Bắt đầu trận đấu: " .. matchId)
 	broadcastStats()
 end
 
@@ -209,7 +205,6 @@ local function recordKill(killerPlayer, victimPlayer)
 			for bot, data in pairs(BotManager.GetActiveBots()) do
 				if data.name == killerPlayer or bot.Name == killerPlayer then
 					killerTeam = data.team
-					print("[MatchEndConditions] Tìm thấy bot " .. killerPlayer .. " trong team " .. tostring(killerTeam))
 					break
 				end
 			end
@@ -240,7 +235,6 @@ local function recordKill(killerPlayer, victimPlayer)
 	end
 	
 	if not killerTeam then 
-		print("[MatchEndConditions] Không tìm thấy team cho killer: " .. killerName)
 		return 
 	end
 	
@@ -340,7 +334,6 @@ local function hookCombatSystem()
 				end
 			end
 		end)
-		print("[MatchEndConditions] Đã hook vào CombatEvent")
 	end
 end
 
@@ -348,14 +341,12 @@ end
 local function hookBaseDamageSystem()
 	-- Lắng nghe khi base bị đánh
 	-- BaseDamageSystem sẽ gọi RecordBaseDamage khi có sát thương
-	print("[MatchEndConditions] Sẵn sàng nhận base damage từ BaseDamageSystem")
 end
 
 -- ========== KHỞI TẠO ==========
 hookCombatSystem()
 hookBaseDamageSystem()
 
-print("[MatchEndConditions] Đã khởi động thành công!")
 print(string.format("[MatchEndConditions] Cấu hình: Kills để thắng = %d, Base damage để thắng = %d",
 	CONFIG.KILLS_TO_WIN, CONFIG.BASE_DAMAGE_TO_WIN))
 

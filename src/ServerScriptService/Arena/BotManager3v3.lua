@@ -4,7 +4,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-print("[BotManager3v3] Khoi dong...")
 
 local CONFIG = {
 	DETECTION_RANGE = 120,       -- Tang pham vi phat hien
@@ -230,7 +229,6 @@ local function refreshBaseModelCache()
 		end
 	end
 	
-	print(string.format("[BotManager3v3] refreshBaseModelCache: Team1=%d, Team2=%d", #baseModelCache.Team1, #baseModelCache.Team2))
 end
 
 local function findNearestEnemy(botData)
@@ -360,7 +358,6 @@ local function findEnemyBase(botData)
 	-- Xác định map hiện tại của bot
 	local currentMap = getMapFromPosition(hrp.Position)
 	if not currentMap then
-		print("[BotManager3v3] " .. botData.name .. " khong tim thay map!")
 		return nil
 	end
 	
@@ -368,7 +365,6 @@ local function findEnemyBase(botData)
 	refreshBaseModelCache()
 	local list = baseModelCache[enemyTeam]
 	if not list or #list == 0 then
-		print("[BotManager3v3] " .. botData.name .. " khong tim thay " .. enemyTeam .. " base trong cache!")
 		return nil
 	end
 	
@@ -397,9 +393,7 @@ local function findEnemyBase(botData)
 	end
 	
 	if best then
-		print(string.format("[BotManager3v3] %s tim thay %s (dist=%.1f)", botData.name, best.instance.Name, best.distance))
 	else
-		print("[BotManager3v3] " .. botData.name .. " khong tim thay base trong map " .. currentMap)
 	end
 	
 	return best
@@ -611,11 +605,9 @@ local function updateAI(botData)
 		if base.distance <= CONFIG.BASE_ATTACK_RANGE then
 			botData.state = "attacking_base"
 			attack(botData, base)
-			print(string.format("[BotManager3v3] %s đang ĐÁNH BASE %s (dist=%.1f)", botData.name, base.instance.Name, base.distance))
 		else
 			botData.state = "pushing_base"
 			moveTo(botData, approachPointToward(base, hrp))
-			print(string.format("[BotManager3v3] %s đang DI CHUYỂN ĐẾN BASE %s (dist=%.1f)", botData.name, base.instance.Name, base.distance))
 		end
 		return
 	end
@@ -651,7 +643,6 @@ local function updateAI(botData)
 		
 		-- Di chuyển thẳng đến base địch
 		moveTo(botData, targetPos)
-		print(string.format("[BotManager3v3] %s đang DI CHUYỂN THẲNG ĐẾN BASE ĐỊCH %s", botData.name, enemyBase.Name))
 	else
 		-- Fallback: patrol ngẫu nhiên để tìm base địch
 		botData.state = "patrolling"
@@ -739,7 +730,6 @@ local function spawnBot(teamName, spawnPos)
 		end)
 	end)
 
-	print(string.format("[BotManager3v3] Spawned: %s (Team: %s)", name, teamName))
 	return botData
 end
 
@@ -769,7 +759,6 @@ local function botAttackBase(baseModel, defendingTeam, attackerName, attackerTea
 	
 	-- Kiem tra neu base bi huy
 	if baseHumanoid.Health <= 0 then
-		print(string.format("[BotManager3v3] %s da bi HUY BOI %s (%s)!", baseModel.Name, attackerName, attackerTeam))
 		
 		-- Thong bao cho MatchEndConditions
 		if _G.MatchEndConditions and _G.MatchEndConditions.RecordBaseDestroyed then
@@ -833,6 +822,5 @@ RunService.Heartbeat:Connect(function(deltaTime)
 end)
 
 _G.BotManager3v3 = BotManager3v3
-print("[BotManager3v3] San sang.")
 
 return BotManager3v3

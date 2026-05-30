@@ -6,7 +6,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local Workspace = game:GetService("Workspace")
 
-print("[BossManager] ========== KHỞI ĐỘNG ==========")
 
 -- ========== CONFIG ==========
 local CONFIG = {
@@ -238,7 +237,6 @@ local function setupBossAI(boss)
 			
 			game:GetService("Debris"):AddItem(attackEffect, 0.3)
 			
-			print("[BossManager] Boss tấn công " .. targetCharacter.Name .. " gây " .. CONFIG.ATTACK_DAMAGE .. " damage")
 		end
 	end
 	
@@ -283,7 +281,6 @@ local function checkAndSpawnBoss(matchTime, matchDuration)
 	
 	-- Random spawn chance
 	if math.random() <= CONFIG.SPAWN_CHANCE then
-		print("[BossManager] Elite Boss đang xuất hiện!")
 		
 		-- Tìm vị trí spawn (giữa map)
 		local spawnPos = Vector3.new(13, 15, -1040) -- Vị trí trung tâm
@@ -322,7 +319,6 @@ local function checkAndSpawnBoss(matchTime, matchDuration)
 				
 				-- Xử lý khi boss chết
 				humanoid.Died:Connect(function()
-					print("[BossManager] Elite Boss đã bị tiêu diệt!")
 					
 					bossEvent:FireAllClients({
 						event = "BossDefeated",
@@ -338,7 +334,6 @@ local function checkAndSpawnBoss(matchTime, matchDuration)
 				end)
 			end
 			
-			print("[BossManager] Elite Boss đã spawn tại: " .. tostring(spawnPos))
 		end
 	end
 end
@@ -351,7 +346,6 @@ local function cleanup()
 	activeBoss = nil
 	bossSpawned = false
 	currentMatchId = nil
-	print("[BossManager] Đã cleanup")
 end
 
 -- ========== PUBLIC API ==========
@@ -376,12 +370,3 @@ end
 -- Export
 _G.BossManager = BossManager
 
-print("[BossManager] ========== KHỞI ĐỘNG THÀNH CÔNG ==========")
-print("[BossManager] Cấu hình:")
-print("  - Tỉ lệ xuất hiện: " .. (CONFIG.SPAWN_CHANCE * 100) .. "%")
-print("  - Thời gian xuất hiện: Từ " .. (CONFIG.MIN_MATCH_TIME * 100) .. "% trận")
-print("  - Kích thước: " .. CONFIG.SCALE .. "x")
-print("  - Máu: " .. CONFIG.HEALTH)
-print("  - Tốc độ: " .. CONFIG.WALK_SPEED .. " (1/3 người chơi)")
-print("  - Damage: " .. CONFIG.ATTACK_DAMAGE)
-print("  - Tốc độ đánh: " .. CONFIG.ATTACK_COOLDOWN .. "s")

@@ -80,7 +80,6 @@ local function PlayAnimation(character: Model, direction: string)
 	if not animator then
 		animator = Instance.new("Animator")
 		animator.Parent = humanoid
-		print("[DashModule] Created new Animator")
 	end
 	
 	-- Find the animation
@@ -95,14 +94,12 @@ local function PlayAnimation(character: Model, direction: string)
 		return false
 	end
 	
-	print("[DashModule] Playing animation: " .. direction .. " with ID: " .. animation.AnimationId)
 	
 	-- Load and play animation with high priority
 	local animationTrack = animator:LoadAnimation(animation)
 	animationTrack.Priority = Enum.AnimationPriority.Action
 	animationTrack:Play()
 	
-	print("[DashModule] Animation track length: " .. animationTrack.Length)
 	
 	return true
 end

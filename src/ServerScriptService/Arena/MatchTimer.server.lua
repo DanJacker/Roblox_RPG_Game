@@ -96,7 +96,6 @@ local function startMatchTimer(matchId, matchData)
 	_G.Team1Kills = 0
 	_G.Team2Kills = 0
 	
-	print(string.format("[MatchTimer] Bắt đầu đếm thời gian cho trận %s (%s - %d giây = 10 phút)", matchId, matchData.mode, MATCH_DURATION))
 	
 	activeTimers[matchId] = {
 		startTime = tick(),
@@ -134,12 +133,10 @@ local function startMatchTimer(matchId, matchData)
 			
 			-- Kiểm tra hết thời gian
 			if remaining <= 0 then
-				print("[MatchTimer] Hết thời gian cho trận " .. matchId)
 				
 				-- Tính winner theo điểm số
 				local winner, reason = calculateWinnerByScore()
 				
-				print(string.format("[MatchTimer] Kết quả: %s thắng (Lý do: %s)", winner, reason))
 				
 				-- Thông báo kết quả
 				for _, playerId in ipairs(timerData.players) do
@@ -178,7 +175,6 @@ end
 local function stopMatchTimer(matchId)
 	if activeTimers[matchId] then
 		activeTimers[matchId] = nil
-		print("[MatchTimer] Đã dừng timer cho trận " .. matchId)
 	end
 end
 
@@ -186,9 +182,3 @@ end
 _G.StartMatchTimer = startMatchTimer
 _G.StopMatchTimer = stopMatchTimer
 
-print("[MatchTimer] Match Timer đã được tải!")
-print("[MatchTimer] Thời gian trận đấu: " .. MATCH_DURATION .. " giây (" .. (MATCH_DURATION / 60) .. " phút)")
-print("[MatchTimer] Quy tắc tính điểm khi hết thời gian:")
-print("[MatchTimer] 1. Team có nhiều base hơn thắng")
-print("[MatchTimer] 2. Nếu bằng nhau: Team có tổng HP base cao hơn thắng")
-print("[MatchTimer] 3. Nếu bằng nhau: Team có nhiều kills hơn thắng")

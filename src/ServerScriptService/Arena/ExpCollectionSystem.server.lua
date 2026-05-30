@@ -72,10 +72,8 @@ local function collectExp(orb, player)
             PlayerData.Set(player, "Level", newLevel)
             PlayerData.Set(player, "Exp", newExp - expNeeded)
             
-            print("[ExpCollection] " .. player.Name .. " đã lên level " .. newLevel .. "!")
         end
         
-        print("[ExpCollection] " .. player.Name .. " đã thu thập " .. finalExp .. " EXP (" .. (multiplier * 100) .. "%)")
     end
     
     -- Xóa orb
@@ -150,7 +148,6 @@ local function scanExistingOrbs()
             end
         end
     end
-    print("[ExpCollection] Đã quét và setup " .. count .. " ExpOrb hiện có")
 end
 
 -- Theo dõi ExpOrb mới được thêm vào Workspace
@@ -161,7 +158,6 @@ Workspace.DescendantAdded:Connect(function(descendant)
         local orb = descendant:FindFirstChild("Orb")
         if orb then
             setupExpOrb(orb)
-            print("[ExpCollection] Đã setup ExpOrb mới")
         end
     end
 end)
@@ -169,8 +165,3 @@ end)
 -- Quét orbs hiện có
 scanExistingOrbs()
 
-print("[ExpCollectionSystem] Đã khởi động thành công!")
-print("[ExpCollectionSystem] Tự động thu thập khi player đến gần: " .. AUTO_COLLECT_RANGE .. " studs")
-print("[ExpCollectionSystem] Cùng team: " .. (SAME_TEAM_MULTIPLIER * 100) .. "% EXP")
-print("[ExpCollectionSystem] Khác team: " .. (DIFFERENT_TEAM_MULTIPLIER * 100) .. "% EXP")
-print("[ExpCollectionSystem] Thời gian tồn tại: " .. DESPAWN_TIME .. " giây")

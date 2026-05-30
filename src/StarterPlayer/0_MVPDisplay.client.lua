@@ -3,7 +3,6 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
-print("[MVP Display] Đang khởi động...")
 
 -- Đợi player sẵn sàng
 local player = Players.LocalPlayer
@@ -19,10 +18,8 @@ if not PlayerGui then
 	return
 end
 
-print("[MVP Display] PlayerGui đã sẵn sàng!")
 
 -- ========== TẠO UI ==========
-print("[MVP Display] Bắt đầu tạo UI...")
 
 -- Tạo ScreenGui
 local screenGui = Instance.new("ScreenGui")
@@ -30,7 +27,6 @@ screenGui.Name = "MVPDisplayGui"
 screenGui.ResetOnSpawn = false
 screenGui.DisplayOrder = 9999
 screenGui.Parent = PlayerGui
-print("[MVP Display] ✓ ScreenGui đã tạo!")
 
 -- ========== CONTAINER CHÍNH ==========
 local container = Instance.new("Frame")
@@ -43,7 +39,6 @@ container.Visible = false
 container.ZIndex = 100
 container.ClipsDescendants = false
 container.Parent = screenGui
-print("[MVP Display] ✓ Container đã tạo!")
 
 -- Viền vàng
 local stroke = Instance.new("UIStroke")
@@ -67,7 +62,6 @@ titleLabel.TextSize = 24
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.ZIndex = 100
 titleLabel.Parent = container
-print("[MVP Display] ✓ Title đã tạo!")
 
 -- ========== BÊN TRÁI - TEAM THẮNG ==========
 local winnerBg = Instance.new("Frame")
@@ -152,7 +146,6 @@ winnerScore.ZIndex = 100
 winnerScore.TextStrokeTransparency = 0
 winnerScore.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 winnerScore.Parent = container
-print("[MVP Display] ✓ Winner side đã tạo!")
 
 -- ========== BÊN PHẢI - TEAM THUA ==========
 local loserBg = Instance.new("Frame")
@@ -237,7 +230,6 @@ loserScore.ZIndex = 100
 loserScore.TextStrokeTransparency = 0
 loserScore.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 loserScore.Parent = container
-print("[MVP Display] ✓ Loser side đã tạo!")
 
 -- ========== NÚT ĐÓNG ==========
 local closeButton = Instance.new("TextButton")
@@ -258,23 +250,17 @@ closeCorner.CornerRadius = UDim.new(0, 8)
 closeCorner.Parent = closeButton
 
 closeButton.MouseButton1Click:Connect(function()
-	print("[MVP Display] Nút Đóng được nhấn!")
 	container.Visible = false
 end)
-print("[MVP Display] ✓ Close button đã tạo!")
 
 -- ========== BIẾN LƯU DATA ==========
 local storedMVPData = nil
 
 -- ========== HÀM HIỂN THỊ ==========
 local function showMVP(data)
-	print("[MVP Display] ========== SHOW MVP CALLED ==========")
-	print("[MVP Display] Input data: " .. tostring(data))
-	print("[MVP Display] storedMVPData: " .. tostring(storedMVPData))
 	
 	-- Nếu không có data truyền vào, dùng data đã lưu
 	if not data then
-		print("[MVP Display] No input data, using storedMVPData")
 		data = storedMVPData
 	end
 	
@@ -283,9 +269,6 @@ local function showMVP(data)
 		return
 	end
 	
-	print("[MVP Display] Using data: winnerTeam=" .. tostring(data.winnerTeam))
-	print("[MVP Display] winnerMVP: " .. tostring(data.winnerMVP and data.winnerMVP.name or "nil"))
-	print("[MVP Display] loserMVP: " .. tostring(data.loserMVP and data.loserMVP.name or "nil"))
 	
 	local winnerTeam = data.winnerTeam
 	local winnerMVP = data.winnerMVP
@@ -326,7 +309,6 @@ local function showMVP(data)
 	end
 	
 	-- Chạy animation hiển thị
-	print("[MVP Display] Setting container visible and playing animation...")
 	container.Visible = true
 	container.Size = UDim2.new(0, 0, 0, 0)
 	container.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -337,17 +319,13 @@ local function showMVP(data)
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
-		print("[MVP Display] ✓ Animation completed!")
 	end)
 	
-	print("[MVP Display] ✓ MVP UI đã hiển thị! Container.Visible = " .. tostring(container.Visible))
 end
 
 -- Hàm lưu data (không hiển thị)
 local function storeMVPData(data)
-	print("[MVP Display] ========== LƯU MVP DATA ==========")
 	storedMVPData = data
-	print("[MVP Display] ✓ Data đã được lưu, chờ gọi showMVP()")
 end
 
 -- ========== KẾT NỐI VỚI SERVER ==========
@@ -370,21 +348,12 @@ local function getOrCreateMVPAnnouncementEvent()
 end
 
 local MVPAnnouncement = getOrCreateMVPAnnouncementEvent()
-print("[MVP Display] ✓ MVPAnnouncement RemoteEvent đã kết nối!")
 
 -- Lắng nghe event từ server - CHỈ LƯU DATA, KHÔNG HIỂN THỊ NGAY
 MVPAnnouncement.OnClientEvent:Connect(function(data)
-	print("[MVP Display] ========== NHẬN MVP DATA TỪ SERVER ==========")
-	print("[MVP Display] winnerTeam: " .. tostring(data.winnerTeam))
-	print("[MVP Display] winnerMVP: " .. tostring(data.winnerMVP and data.winnerMVP.name or "nil"))
-	print("[MVP Display] loserMVP: " .. tostring(data.loserMVP and data.loserMVP.name or "nil"))
-	print("[MVP Display] Full data: " .. tostring(data))
 	storeMVPData(data)
-	print("[MVP Display] ✓ Data đã được lưu vào storedMVPData")
-	print("[MVP Display] storedMVPData is now: " .. tostring(storedMVPData))
 end)
 
-print("[MVP Display] ✓ Đang lắng nghe MVPAnnouncement event...")
 
 -- ========== EXPORT ĐỂ TEST ==========
 _G.MVPDisplay = {
@@ -394,5 +363,3 @@ _G.MVPDisplay = {
 	getStoredData = function() return storedMVPData end
 }
 
-print("[MVP Display] ========== ĐÃ KHỞI TẠO THÀNH CÔNG! ==========")
-print("[MVP Display] Sử dụng _G.MVPDisplay.showMVP(data) để test")

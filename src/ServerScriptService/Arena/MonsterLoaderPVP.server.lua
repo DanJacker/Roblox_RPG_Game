@@ -4,11 +4,9 @@
 
 local Players = game:GetService("Players")
 
-print("[MonsterLoaderPVP] Khoi dong...")
 
 -- ========== REQUIRE MODULE ==========
 local MonsterManager3v3 = require(script.Parent:WaitForChild("MonsterManager3v3"))
-print("[MonsterLoaderPVP] MonsterManager3v3 da duoc load!")
 
 -- ========== CONFIG ==========
 local SPAWN_DELAY = 3 -- Giay sau khi tran bat dau
@@ -94,12 +92,10 @@ local function spawnMonsters()
 		MonsterManager3v3.SpawnMonster(pos)
 	end
 
-	print(string.format("[MonsterLoaderPVP] Da spawn %d quai vat random o 3 duong!", #spawnPositions))
 end
 
 local function clearMonsters()
 	MonsterManager3v3.ClearAllMonsters()
-	print("[MonsterLoaderPVP] Da xoa tat ca quai vat")
 end
 
 -- ========== LANG NGHE MATCH START/END ==========
@@ -113,12 +109,10 @@ local function hookMatchSystem()
 			originalStartMatch(matchId, matchData)
 			
 			if matchData and matchData.mode == "3v3" then
-				print("[MonsterLoaderPVP] Tran 3v3 bat dau, se spawn quai sau " .. SPAWN_DELAY .. " giay...")
 				isMatchActive = true
 				task.delay(SPAWN_DELAY, spawnMonsters)
 			end
 		end
-		print("[MonsterLoaderPVP] Da hook vao StartMatch")
 	end
 	
 	-- Lang nghe khi EndMatch duoc goi
@@ -126,13 +120,11 @@ local function hookMatchSystem()
 	if originalEndMatch then
 		_G.EndMatch = function(matchId, reason)
 			if isMatchActive then
-				print("[MonsterLoaderPVP] Tran dau ket thuc, xoa quai vat...")
 				isMatchActive = false
 				clearMonsters()
 			end
 			originalEndMatch(matchId, reason)
 		end
-		print("[MonsterLoaderPVP] Da hook vao EndMatch")
 	end
 end
 
@@ -145,4 +137,3 @@ hookMatchSystem()
 _G.SpawnPVPMonsters = spawnMonsters
 _G.ClearPVPMonsters = clearMonsters
 
-print("[MonsterLoaderPVP] San sang! Se spawn quai khi tran 3v3 bat dau.")

@@ -15,11 +15,9 @@ _G.SpawnSelectionServer = {
     end,
     setSpawnPosition = function(playerId, position)
         spawnPositions[playerId] = position
-        print("[SpawnSelectionServer] Lưu spawn position cho player " .. tostring(playerId) .. ": " .. tostring(position))
     end,
     clearSpawnPosition = function(playerId)
         spawnPositions[playerId] = nil
     end
 }
 
-print("[SpawnSelectionServer] ✅ Spawn Selection Server đã khởi động!")

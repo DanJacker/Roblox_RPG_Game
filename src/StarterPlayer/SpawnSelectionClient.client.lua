@@ -108,9 +108,6 @@ mapImage.ZIndex = 53
 mapImage.Parent = minimapFrame
 
 -- Debug: Print map bounds
-print("[SpawnSelection] Map bounds for 1v1:")
-print("  Min X: -487, Max X: 587")
-print("  Min Z: -1365.875, Max Z: -697.875")
 
 -- Overlay cho khu vực bị cấm (hiển thị khu vực không được chọn)
 local restrictedOverlay = Instance.new("Frame")
@@ -259,7 +256,6 @@ local function mapToWorldPosition(clickX, clickY, mode)
     
     if not mapInfo then
         -- Fallback: sử dụng giá trị mặc định
-        print("[SpawnSelection] Không tìm thấy map info, sử dụng giá trị mặc định")
         local mapSize = Vector3.new(200, 0, 200)
         local worldX = (clickX - 0.5) * mapSize.X
         local worldZ = (clickY - 0.5) * mapSize.Z
@@ -276,7 +272,6 @@ local function mapToWorldPosition(clickX, clickY, mode)
     -- Y = 20 để spawn an toàn trên mặt đất
     local worldY = 20
     
-    print(string.format("[SpawnSelection] Click (%.2f, %.2f) -> World (%.1f, %.1f, %.1f)", clickX, clickY, worldX, worldY, worldZ))
     
     return Vector3.new(worldX, worldY, worldZ)
 end
@@ -323,7 +318,6 @@ local function updateMarker(clickX, clickY)
     tween.Completed:Wait()
     TweenService:Create(marker, TweenInfo.new(0.2), {Size = UDim2.new(0, 20, 0, 20)}):Play()
     
-    print("[SpawnSelection] Đã chọn vị trí: (" .. string.format("%.2f", clickX) .. ", " .. string.format("%.2f", clickY) .. ") -> World: " .. tostring(selectedPosition))
 end
 
 -- Click vào minimap
@@ -340,7 +334,6 @@ minimapFrame.MouseButton1Click:Connect(function()
     if not isValidClickPosition(clickX, clickY) then
         -- Hiển thị thông báo lỗi
         local teamSide = playerTeam and playerTeam.Name == "Team1" and "PHẢI (bên phải)" or "TRÁI (bên trái)"
-        print("[SpawnSelection] Vị trí không hợp lệ! Đội " .. (playerTeam and playerTeam.Name or "unknown") .. " chỉ được chọn ở phía " .. teamSide)
         
         -- Flash màu đỏ để báo lỗi
         local originalColor = minimapFrame.BackgroundColor3
@@ -362,7 +355,6 @@ confirmBtn.MouseButton1Click:Connect(function()
             position = selectedPosition
         })
         
-        print("[SpawnSelection] Đã gửi vị trí spawn: " .. tostring(selectedPosition))
         
         -- Ẩn UI
         screenGui.Enabled = false
@@ -376,7 +368,6 @@ confirmBtn.MouseButton1Click:Connect(function()
         confirmBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
         task.wait(0.2)
         confirmBtn.BackgroundColor3 = originalColor
-        print("[SpawnSelection] Vui lòng chọn vị trí spawn trước!")
     end
 end)
 
@@ -419,7 +410,6 @@ local function startCountdown()
             
             local mode = currentMatchData and currentMatchData.mode or "1v1"
             selectedPosition = mapToWorldPosition(randomX, randomZ, mode)
-            print("[SpawnSelection] Hết thời gian, spawn random: " .. tostring(selectedPosition))
         end
         
         -- Gửi vị trí đến server
@@ -456,7 +446,6 @@ local function showSpawnSelection(matchData)
     if matchData and matchData.mode then
         local mapImageId = MAP_IMAGES[matchData.mode] or MAP_IMAGES["1v1"]
         mapImage.Image = mapImageId
-        print("[SpawnSelection] Sử dụng map image cho mode " .. matchData.mode .. ": " .. mapImageId)
     end
     
     -- Hiển thị overlay khu vực bị cấm dựa trên team
@@ -505,7 +494,6 @@ local function showSpawnSelection(matchData)
     -- Bắt đầu countdown
     task.spawn(startCountdown)
     
-    print("[SpawnSelection] Hiển thị UI chọn spawn cho trận " .. (matchData.mode or "unknown") .. " - Team: " .. (playerTeam and playerTeam.Name or "unknown"))
 end
 
 -- Hàm ẩn UI
@@ -527,10 +515,8 @@ end
 -- Lắng nghe khi bắt đầu chọn spawn
 spawnSelectEvent.OnClientEvent:Connect(function(data)
     if data.action == "startSelection" then
-        print("[SpawnSelection] Bắt đầu chọn spawn!", data.mode)
         showSpawnSelection(data)
     elseif data.action == "endSelection" then
-        print("[SpawnSelection] Kết thúc chọn spawn")
         screenGui.Enabled = false
         isUIVisible = false
         
@@ -546,4 +532,3 @@ spawnSelectEvent.OnClientEvent:Connect(function(data)
     end
 end)
 
-print("[SpawnSelection] Đã khởi động! Chờ tìm trận...")

@@ -211,7 +211,6 @@ function AntiCheat.AddWarning(player, reason)
 	
 	stats.warnings = stats.warnings + 1
 	
-	print("[AntiCheat] WARNING: " .. player.Name .. " - " .. reason .. " (Warnings: " .. stats.warnings .. ")")
 	
 	-- Auto-kick after 5 warnings
 	if stats.warnings >= 5 then
@@ -249,7 +248,6 @@ function SecureDataStore.Load(player)
 		-- Validate loaded data
 		local validatedData = SecureDataStore.ValidateData(result)
 		cache[player.UserId] = validatedData
-		print("[DataStore] Loaded data for " .. player.Name)
 		return validatedData
 	elseif not success then
 		warn("[DataStore] Failed to load data for " .. player.Name .. ": " .. tostring(result))
@@ -314,7 +312,6 @@ function SecureDataStore.Save(player, data)
 	end)
 	
 	if success then
-		print("[DataStore] Saved data for " .. player.Name)
 		return true
 	else
 		warn("[DataStore] Failed to save data for " .. player.Name .. ": " .. tostring(err))
@@ -334,7 +331,6 @@ function SecureDataStore.SaveAll()
 			end
 		end
 	end
-	print("[DataStore] Auto-saved " .. savedCount .. " players")
 end
 
 function SecureDataStore.GetCache(player)
@@ -413,10 +409,6 @@ function SecurityManager.Init()
 		SecureDataStore = SecureDataStore,
 	}
 	
-	print("[Security] Security Manager initialized")
-	print("[Security] Rate limits: " .. table.concat({"JoinQueue=" .. CONFIG.RATE_LIMITS.JoinQueue, "CombatRemote=" .. CONFIG.RATE_LIMITS.CombatRemote}, ", "))
-	print("[Security] DataStore: " .. CONFIG.DATASTORE_NAME)
-	print("[Security] Auto-save interval: " .. CONFIG.AUTO_SAVE_INTERVAL .. "s")
 	
 	return true
 end

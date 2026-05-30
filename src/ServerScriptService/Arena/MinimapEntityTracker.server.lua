@@ -3,7 +3,6 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("[MinimapTracker] Đang khởi động...")
 
 -- Remote Event
 local MinimapEntityUpdate = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("MinimapEntityUpdate")
@@ -167,7 +166,6 @@ task.spawn(function()
     end
     
     local MatchManager = _G.MatchManager
-    print("[MinimapTracker] MatchManager found, hooking events...")
     
     -- Hook vào StartMatch
     local originalStartMatch = MatchManager.StartMatch
@@ -175,7 +173,6 @@ task.spawn(function()
         MatchManager.StartMatch = function(matchId, matchData)
             currentMatchMode = matchData and matchData.mode
             matchActive = true
-            print("[MinimapTracker] Match started: " .. tostring(currentMatchMode))
             return originalStartMatch(matchId, matchData)
         end
     end
@@ -185,7 +182,6 @@ task.spawn(function()
     if originalEndMatch then
         MatchManager.EndMatch = function(matchId, reason)
             matchActive = false
-            print("[MinimapTracker] Match ended")
             return originalEndMatch(matchId, reason)
         end
     end
@@ -194,4 +190,3 @@ end)
 -- Bắt đầu update loop
 task.spawn(startUpdateLoop)
 
-print("[MinimapTracker] Đã khởi động thành công!")

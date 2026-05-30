@@ -5,11 +5,9 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-print("[BotLoader3v3] Khoi dong...")
 
 -- ========== REQUIRE MODULE ==========
 local BotManager3v3 = require(script.Parent:WaitForChild("BotManager3v3"))
-print("[BotLoader3v3] BotManager3v3 da duoc load!")
 
 -- ========== CONFIG ==========
 local BOTS_PER_TEAM = 3 -- So bot moi team (3v3)
@@ -44,7 +42,6 @@ local function spawnBots()
 		local pos = TEAM1_SPAWN_POSITIONS[i] or TEAM1_SPAWN_POSITIONS[1]
 		task.wait(0.3)
 		BotManager3v3.SpawnBotForTeam("Team1", pos)
-		print(string.format("[BotLoader3v3] Spawned Team1 Bot %d at %s", i, tostring(pos)))
 	end
 	
 	-- Spawn bot cho Team2
@@ -52,15 +49,12 @@ local function spawnBots()
 		local pos = TEAM2_SPAWN_POSITIONS[i] or TEAM2_SPAWN_POSITIONS[1]
 		task.wait(0.3)
 		BotManager3v3.SpawnBotForTeam("Team2", pos)
-		print(string.format("[BotLoader3v3] Spawned Team2 Bot %d at %s", i, tostring(pos)))
 	end
 
-	print(string.format("[BotLoader3v3] Da spawn %d bot cho moi team!", BOTS_PER_TEAM))
 end
 
 local function clearBots()
 	BotManager3v3.ClearAllBots()
-	print("[BotLoader3v3] Da xoa tat ca bot")
 end
 
 -- ========== LANG NGHE MATCH START/END ==========
@@ -72,13 +66,11 @@ local function hookMatchSystem()
 			originalStartMatch(matchId, matchData)
 			
 			if matchData and matchData.mode == "3v3" then
-				print("[BotLoader3v3] Tran 3v3 bat dau, se spawn bot sau " .. SPAWN_DELAY .. " giay...")
 				isMatchActive = true
 				currentMode = "3v3"
 				task.delay(SPAWN_DELAY, spawnBots)
 			end
 		end
-		print("[BotLoader3v3] Da hook vao StartMatch")
 	end
 	
 	-- Lang nghe khi EndMatch duoc goi
@@ -86,14 +78,12 @@ local function hookMatchSystem()
 	if originalEndMatch then
 		_G.EndMatch = function(matchId, reason)
 			if isMatchActive then
-				print("[BotLoader3v3] Tran dau ket thuc, xoa bot...")
 				isMatchActive = false
 				currentMode = nil
 				clearBots()
 			end
 			originalEndMatch(matchId, reason)
 		end
-		print("[BotLoader3v3] Da hook vao EndMatch")
 	end
 end
 
@@ -105,7 +95,6 @@ hookMatchSystem()
 _G.Spawn3v3Bots = spawnBots
 _G.Clear3v3Bots = clearBots
 
-print("[BotLoader3v3] San sang! Se spawn bot co kha nang pha base khi tran 3v3 bat dau.")
 
 -- ========== TEST MODE: DA TAT ==========
 -- TEST MODE da duoc tat de khong spawn bot cho map 1v1

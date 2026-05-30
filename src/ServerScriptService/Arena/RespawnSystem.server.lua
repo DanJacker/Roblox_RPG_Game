@@ -25,7 +25,6 @@ if not respawnEvent then
 	respawnEvent.Parent = ReplicatedStorage
 end
 
-print("RespawnSystem d� du?c t?i!")
 
 -- T�nh th?i gian respawn d?a tr�n s? l?n ch?t
 local function getRespawnTime(player)
@@ -130,10 +129,8 @@ local function spawnAtTeamLocation(player, character)
 		local lobbySpawn = getLobbySpawnLocation()
 		if lobbySpawn then
 			hrp.CFrame = lobbySpawn.CFrame + Vector3.new(0, 3, 0)
-			print(player.Name .. " spawn t?i lobby")
 		else
 			hrp.CFrame = CFrame.new(0, 10, 0) -- Fallback
-			print(player.Name .. " spawn t?i v? tr� fallback")
 		end
 		return
 	end
@@ -150,7 +147,6 @@ local function spawnAtTeamLocation(player, character)
 				local basePos = baseData.base:GetPivot().Position
 				local offset = Vector3.new(math.random(-3, 3), 0, math.random(-3, 3))
 				hrp.CFrame = CFrame.new(basePos + Vector3.new(0, 3, 0) + offset)
-				print(player.Name .. " spawn t?i base riêng (" .. playerInfo.mode .. ")")
 				return
 			end
 		end
@@ -163,7 +159,6 @@ local function spawnAtTeamLocation(player, character)
 				local spawnPoint = spawns[math.random(1, #spawns)]
 				local offset = Vector3.new(math.random(-3, 3), 0, math.random(-3, 3))
 				hrp.CFrame = spawnPoint.CFrame + Vector3.new(0, 3, 0) + offset
-				print(player.Name .. " spawn t?i match (" .. playerInfo.mode .. ")")
 				return
 			end
 		end
@@ -179,13 +174,11 @@ local function spawnAtTeamLocation(player, character)
 			math.random(-3, 3)
 		)
 		hrp.CFrame = spawnLocation.CFrame + offset
-		print(player.Name .. " spawn t?i " .. team.Name .. " base")
 	else
 		-- Fallback: spawn t?i lobby
 		local lobbySpawn = getLobbySpawnLocation()
 		if lobbySpawn then
 			hrp.CFrame = lobbySpawn.CFrame + Vector3.new(0, 3, 0)
-			print(player.Name .. " spawn t?i lobby (kh�ng t�m th?y team spawn)")
 		end
 	end
 end
@@ -198,13 +191,11 @@ local function applySpawnProtection(character)
 	local player = Players:GetPlayerFromCharacter(character)
 	if player then
 		protectedPlayers[player.UserId] = true
-		print("B?t d?u b?o v? spawn cho: " .. player.Name)
 	end
 
 	-- Set MaxHealth v? 100 v� kh�i ph?c health
 	humanoid.MaxHealth = 100
 	humanoid.Health = 100
-	print("�� set health v? 100 cho: " .. character.Name)
 
 	-- T?o hi?u ?ng visual b?o v?
 	local highlight = Instance.new("Highlight")
@@ -221,7 +212,6 @@ local function applySpawnProtection(character)
 	healthChangedConnection = humanoid.HealthChanged:Connect(function(newHealth)
 		if isProtected and newHealth < 100 then
 			humanoid.Health = 100 -- Kh�i ph?c health v? 100 ngay l?p t?c
-			print("�� kh�i ph?c health t? " .. newHealth .. " v? 100")
 		end
 	end)
 
@@ -234,7 +224,6 @@ local function applySpawnProtection(character)
 	-- X�a b?o v?
 	if player then
 		protectedPlayers[player.UserId] = nil
-		print("K?t th�c b?o v? spawn cho: " .. player.Name)
 	end
 
 	-- Ng?t k?t n?i HealthChanged
@@ -260,7 +249,6 @@ local function onPlayerAdded(player)
 
 	-- K?t n?i CharacterAdded TRU?C khi LoadCharacter
 	player.CharacterAdded:Connect(function(character)
-		print("Character d� spawn: " .. character.Name)
 
 		-- Spawn t?i v? tr� team
 		spawnAtTeamLocation(player, character)
@@ -281,7 +269,6 @@ local function onPlayerAdded(player)
 				if IndividualBaseManager then
 					canRespawn = IndividualBaseManager.CanPlayerRespawn(player.Name)
 					if not canRespawn then
-						print(player.Name .. " kh�ng th? h?i sinh v� base d� b? ph� h?y!")
 
 						-- G?i th�ng b�o cho client
 						respawnEvent:FireClient(player, {
@@ -298,8 +285,6 @@ local function onPlayerAdded(player)
 				-- Tang s? l?n ch?t
 				deathCount[player.UserId] = (deathCount[player.UserId] or 0) + 1
 
-				print(player.Name .. " d� ch?t! H?i sinh sau " .. respawnTime .. "s")
-				print("S? l?n ch?t: " .. deathCount[player.UserId])
 
 				-- G?i th�ng b�o cho client
 				respawnEvent:FireClient(player, {
@@ -315,7 +300,6 @@ local function onPlayerAdded(player)
 				if IndividualBaseManager then
 					canRespawn = IndividualBaseManager.CanPlayerRespawn(player.Name)
 					if not canRespawn then
-						print(player.Name .. " kh�ng th? h?i sinh v� base d� b? ph� h?y!")
 
 						-- G?i th�ng b�o cho client
 						respawnEvent:FireClient(player, {
@@ -328,7 +312,6 @@ local function onPlayerAdded(player)
 
 				-- H?i sinh ngu?i choi
 				if player and player.Parent == Players then
-					print("�ang h?i sinh " .. player.Name)
 					player:LoadCharacter()
 
 					-- Th�ng b�o d� h?i sinh
@@ -360,7 +343,3 @@ Players.PlayerRemoving:Connect(function(player)
 	deathCount[player.UserId] = nil
 end)
 
-print("RespawnSystem d� s?n s�ng!")
-print("- Th?i gian h?i sinh ban d?u: " .. BASE_RESPAWN_TIME .. "s")
-print("- Tang th�m m?i l?n ch?t: +" .. RESPAWN_INCREMENT .. "s")
-print("- Th?i gian t?i da: " .. MAX_RESPAWN_TIME .. "s")
