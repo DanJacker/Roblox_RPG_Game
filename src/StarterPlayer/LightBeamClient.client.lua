@@ -6,7 +6,17 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-local lightBeamRemote = ReplicatedStorage:WaitForChild("LightBeamRemote")
+-- Prefer RemoteEvents folder for organization
+local remoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
+if not remoteEvents then
+    warn("[LightBeamClient] RemoteEvents folder not found in ReplicatedStorage")
+    return
+end
+local lightBeamRemote = remoteEvents:WaitForChild("LightBeamRemote", 5)
+if not lightBeamRemote then
+    warn("[LightBeamClient] LightBeamRemote not found in RemoteEvents")
+    return
+end
 
 -- Configuration
 local COOLDOWN = 10 -- seconds (Lux style ultimate)

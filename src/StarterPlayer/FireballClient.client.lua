@@ -6,7 +6,17 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-local fireballRemote = ReplicatedStorage:WaitForChild("FireballRemote")
+-- Prefer RemoteEvents folder for organization
+local remoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
+if not remoteEvents then
+    warn("[FireballClient] RemoteEvents folder not found in ReplicatedStorage")
+    return
+end
+local fireballRemote = remoteEvents:WaitForChild("FireballRemote", 5)
+if not fireballRemote then
+    warn("[FireballClient] FireballRemote not found in RemoteEvents")
+    return
+end
 
 -- Configuration
 local COOLDOWN = 5 -- seconds

@@ -11,6 +11,8 @@ if not PlayerGui then
     return
 end
 
+print("[SwordMenuClient] Loaded. PlayerGui ready for", player.Name)
+
 
 -- RemoteEvents
 local remoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
@@ -18,6 +20,8 @@ if not remoteEvents then
     warn("[SwordMenuClient] RemoteEvents không tìm thấy!")
     return
 end
+
+print("[SwordMenuClient] RemoteEvents found in ReplicatedStorage")
 
 local JoinQueue = remoteEvents:WaitForChild("JoinQueue", 5)
 local LeaveQueue = remoteEvents:WaitForChild("LeaveQueue", 5)
@@ -138,18 +142,21 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
     if input.KeyCode == Enum.KeyCode.J then
+		print("[SwordMenuClient] Hotkey J pressed - firing JoinQueue 1v1")
         -- Join 1v1 queue
         currentQueue = "1v1"
         JoinQueue:FireServer("1v1")
         menuFrame.Visible = false
         isMenuOpen = false
     elseif input.KeyCode == Enum.KeyCode.K then
+		print("[SwordMenuClient] Hotkey K pressed - firing JoinQueue 2v2")
         -- Join 2v2 queue
         currentQueue = "2v2"
         JoinQueue:FireServer("2v2")
         menuFrame.Visible = false
         isMenuOpen = false
     elseif input.KeyCode == Enum.KeyCode.L then
+		print("[SwordMenuClient] Hotkey L pressed - firing JoinQueue 3v3")
         -- Join 3v3 queue
         currentQueue = "3v3"
         JoinQueue:FireServer("3v3")
@@ -160,18 +167,21 @@ end)
 
 -- Xử lý chọn chế độ chơi
 button1v1.MouseButton1Click:Connect(function()
+    print("[SwordMenuClient] Button1v1 clicked - firing JoinQueue 1v1")
 	currentQueue = "1v1"
 	JoinQueue:FireServer("1v1")
 	toggleMenu()
 end)
 
 button2v2.MouseButton1Click:Connect(function()
+    print("[SwordMenuClient] Button2v2 clicked - firing JoinQueue 2v2")
 	currentQueue = "2v2"
 	JoinQueue:FireServer("2v2")
 	toggleMenu()
 end)
 
 button3v3.MouseButton1Click:Connect(function()
+    print("[SwordMenuClient] Button3v3 clicked - firing JoinQueue 3v3")
 	currentQueue = "3v3"
 	JoinQueue:FireServer("3v3")
 	toggleMenu()
@@ -290,6 +300,7 @@ end)
 
 -- Lắng nghe khi tìm thấy trận
 MatchFound.OnClientEvent:Connect(function(data)
+    print("[SwordMenuClient] MatchFound received - mode:", data.mode, "matchId:", data.matchId)
 	
 	if data.hasBots then
 		-- Đếm số bot trong players list

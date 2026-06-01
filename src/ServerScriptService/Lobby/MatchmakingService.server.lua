@@ -1128,6 +1128,7 @@ end)
 -- Xử lý khi player join queue
 JoinQueue.OnServerEvent:Connect(function(player, mode)
 	-- ========== DEBUG: Log exactly what we receive ==========
+	print("[MatchmakingService] JoinQueue received from", player and player.Name or "unknown", "mode", tostring(mode))
 	
 	-- ========== SECURITY: Rate limiting & validation ==========
 	local Security = _G.Security
@@ -1175,6 +1176,7 @@ JoinQueue.OnServerEvent:Connect(function(player, mode)
 end)
 -- Xử lý khi player leave queue
 LeaveQueue.OnServerEvent:Connect(function(player)
+	print("[MatchmakingService] LeaveQueue received from", player and player.Name or "unknown")
 	-- ========== SECURITY: Rate limiting ==========
 	local Security = _G.Security
 	if Security then
