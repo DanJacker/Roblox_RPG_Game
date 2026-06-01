@@ -9,8 +9,35 @@ local COOLDOWN = 0.5
 local DISABLE_COLLISIONS = true -- Tắt collision khi dash để không bị văng
 local USE_FORCEFIELD = true -- Thêm ForceField để bảo vệ khỏi fling
 
-local Animations = ReplicatedStorage:WaitForChild("Animations")
+local Animations = ReplicatedStorage:WaitForChild("Animations", 10)
 local Effects = ReplicatedStorage:FindFirstChild("Effects")
+
+-- Fallback: Tự tạo Animations nếu chưa có
+if not Animations then
+	Animations = Instance.new("Folder")
+	Animations.Name = "Animations"
+	Animations.Parent = ReplicatedStorage
+
+	local ok, AnimationIdAsset = pcall(function()
+		return require(ReplicatedStorage.Modules.AnimationIdAsset)
+	end)
+
+	if ok and AnimationIdAsset then
+		for name, id in pairs(AnimationIdAsset) do
+			local anim = Instance.new("Animation")
+			anim.Name = name
+			anim.AnimationId = id
+			anim.Parent = Animations
+		end
+		-- Thêm Back animation (fallback từ Front)
+		if not AnimationIdAsset.Back then
+			local backAnim = Instance.new("Animation")
+			backAnim.Name = "Back"
+			backAnim.AnimationId = AnimationIdAsset.Front or ""
+			backAnim.Parent = Animations
+		end
+	end
+end
 
 local DashModule = {}
 local isDashing = false
@@ -85,10 +112,14 @@ local function PlayAnimation(character: Model, direction: string)
 	-- Find the animation
 	local animation = Animations:FindFirstChild(direction)
 	if not animation then
-		warn("[DashModule] Animation not found: " .. direction)
-		return false
+		-- Fallback: Nếu không tìm thấy animation (ví dụ 'Back'), dùng 'Front'
+		animation = Animations:FindFirstChild("Front")
+		if not animation then
+			warn("[DashModule] Animation not found: " .. direction .. " (and Front fallback)")
+			return false
+		end
 	end
-	
+
 	if not animation:IsA("Animation") then
 		warn("[DashModule] Object is not an Animation: " .. direction)
 		return false
@@ -105,10 +136,12 @@ local function PlayAnimation(character: Model, direction: string)
 end
 
 function DashModule.Execute(direction: string)
+	direction = direction or "Front"
+
 	if isDashing then
 		return false
 	end
-	
+
 	local player = Players.LocalPlayer
 	if not player then
 		return false
@@ -172,7 +205,7 @@ function DashModule.Execute(direction: string)
 		-- Create BodyVelocity
 		local bodyVelocity = Instance.new("BodyVelocity")
 		bodyVelocity.MaxForce = Vector3.new(math.huge, 0, math.huge)
-		bodyVelocity.Velocity = dashDirection * DASH_SPEED
+		bodyVelocity.Velocity = Vector3.new(dashDirection.X * DASH_SPEED, rootPart.AssemblyLinearVelocity.Y, dashDirection.Z * DASH_SPEED)
 		bodyVelocity.Parent = rootPart
 		
 		-- Dash for duration

@@ -120,6 +120,7 @@ end
 local activeBots = {}
 local botCounter = 0
 local botDeathCounts = {}
+local botAttackBase
 
 local function createBotCharacter(botName, teamName)
 	local rigTemplate = workspace:FindFirstChild("Rig")
@@ -735,7 +736,7 @@ end
 
 -- ========== BOT ATTACK BASE FUNCTION ==========
 -- Function nay duoc goi khi bot tan cong base
-local function botAttackBase(baseModel, defendingTeam, attackerName, attackerTeam, damage)
+botAttackBase = function(baseModel, defendingTeam, attackerName, attackerTeam, damage)
 	if not baseModel then return end
 	
 	-- Tim BaseHumanoid trong base

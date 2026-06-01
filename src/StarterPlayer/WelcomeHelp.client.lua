@@ -1,16 +1,16 @@
 -- Welcome Help - Hiển thị GUI hướng dẫn khi player tham gia lần đầu
 local Players = game:GetService("Players")
-local PlayerSettings = game:GetService("UserSettings")
 
 local player = Players.LocalPlayer
+if not player then
+    return
+end
+
 local playerGui = player:WaitForChild("PlayerGui")
+local helpGui = playerGui:WaitForChild("MatchEndHelpGui", 10)
 
--- Đợi GUI được tạo
-task.wait(2)
-
-local helpGui = playerGui:FindFirstChild("MatchEndHelpGui")
 if helpGui then
-    -- Kiểm tra xem player đã xem hướng dẫn chưa (lưu trong UserSettings)
+    -- Kiểm tra xem player đã xem hướng dẫn chưa (lưu trong thuộc tính của player)
     local hasSeenHelp = player:GetAttribute("HasSeenMatchEndHelp")
     
     if not hasSeenHelp then

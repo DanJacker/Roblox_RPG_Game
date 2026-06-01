@@ -4,7 +4,73 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
-      "$path": "src/ReplicatedStorage"
+      "$path": "src/ReplicatedStorage",
+      "RemoteEvents": {
+        "$path": "src/ReplicatedStorage/RemoteEvents",
+        "BaseDangerEffect": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/BaseDangerEffect.meta.json"
+        },
+        "BaseDestroyed": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/BaseDestroyed.meta.json"
+        },
+        "BaseHealthUpdate": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/BaseHealthUpdate.meta.json"
+        },
+        "CombatRemote": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/CombatRemote.meta.json"
+        },
+        "FireballRemote": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/FireballRemote.meta.json"
+        },
+        "JoinQueue": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/JoinQueue.meta.json"
+        },
+        "KillEvent": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/KillEvent.meta.json"
+        },
+        "LeaveQueue": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/LeaveQueue.meta.json"
+        },
+        "LightBeamRemote": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/LightBeamRemote.meta.json"
+        },
+        "MatchEnded": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/MatchEnded.meta.json"
+        },
+        "MatchFound": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/MatchFound.meta.json"
+        },
+        "MatchStart": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/MatchStart.meta.json"
+        },
+        "MinimapEntityUpdate": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/MinimapEntityUpdate.meta.json"
+        },
+        "MinimapToggle": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/MinimapToggle.meta.json"
+        },
+        "MVPAnnouncement": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/MVPAnnouncement.meta.json"
+        },
+        "QueueStatus": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/QueueStatus.meta.json"
+        },
+        "RankUpdate": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/RankUpdate.meta.json"
+        },
+        "RequestRankUpdate": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/RequestRankUpdate.meta.json"
+        },
+        "RespawnEvent": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/RespawnEvent.meta.json"
+        },
+        "SpawnSelect": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/SpawnSelect.meta.json"
+        },
+        "VictoryAnnouncement": {
+          "$path": "src/ReplicatedStorage/RemoteEvents/VictoryAnnouncement.meta.json"
+        }
+      }
     },
 
     "ServerScriptService": {

@@ -27,8 +27,29 @@ local isAttacking = false
 
 -- Lấy CombatRemote và Animation
 local combatRemote = ReplicatedStorage:WaitForChild("CombatRemote")
-local animationsFolder = ReplicatedStorage:WaitForChild("Animations")
-local basicAttackAnim = animationsFolder:WaitForChild("Basicattack")
+local animationsFolder = ReplicatedStorage:WaitForChild("Animations", 10)
+
+-- Fallback: Tạo Animations folder nếu chưa có
+if not animationsFolder then
+	animationsFolder = Instance.new("Folder")
+	animationsFolder.Name = "Animations"
+	animationsFolder.Parent = ReplicatedStorage
+	
+	local ok, AnimationIdAsset = pcall(function()
+		return require(ReplicatedStorage:FindFirstChild("Modules") and ReplicatedStorage.Modules:FindFirstChild("AnimationIdAsset"))
+	end)
+	
+	if ok and AnimationIdAsset then
+		for name, id in pairs(AnimationIdAsset) do
+			local anim = Instance.new("Animation")
+			anim.Name = name
+			anim.AnimationId = id
+			anim.Parent = animationsFolder
+		end
+	end
+end
+
+local basicAttackAnim = animationsFolder:WaitForChild("Basicattack", 5)
 local effectsFolder = ReplicatedStorage:FindFirstChild("Effects")
 
 
@@ -138,10 +159,6 @@ local function playAttackAnimation()
 	
 	if not success then
 		warn("[CombatClient] Animation lỗi: " .. tostring(result))
-		-- Khôi phục Animate script nếu lỗi
-		if animateScript then
-			animateScript.Enabled = wasAnimateEnabled
-		end
 		return false
 	end
 	

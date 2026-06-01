@@ -726,6 +726,8 @@ local function checkAndFillBots(mode)
 end
 -- Loop kiểm tra timeout và điền bot
 -- SỬA: Kiểm tra globalQueues thay vì localQueues để đảm bảo bot check chạy đúng cho tất cả chế độ
+local removeFromQueue
+
 task.spawn(function()
 	local loopCount = 0
 	while true do
@@ -1014,7 +1016,7 @@ local function addToQueue(player, mode)
 	return true, "Đã tham gia queue " .. mode
 end
 -- Hàm xóa player khỏi queue
-local function removeFromQueue(player)
+removeFromQueue = function(player)
 	-- Xóa từ local queue
 	for mode, queue in pairs(localQueues) do
 		for i, p in ipairs(queue) do

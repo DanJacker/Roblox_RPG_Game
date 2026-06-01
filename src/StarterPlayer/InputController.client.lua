@@ -1,7 +1,7 @@
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local DashModule = require(ReplicatedStorage:WaitForChild("DashModule"))
+local DashModule = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("DashModule"))
 
 local function GetDirection()
 	if UserInputService:IsKeyDown(Enum.KeyCode.W) then
@@ -9,7 +9,7 @@ local function GetDirection()
 	elseif UserInputService:IsKeyDown(Enum.KeyCode.S) then
 		return "Back"
 	end
-	return nil
+	return "Front"
 end
 
 local function OnInputBegan(input: InputObject, gameProcessedEvent: boolean)
@@ -17,13 +17,11 @@ local function OnInputBegan(input: InputObject, gameProcessedEvent: boolean)
 		return
 	end
 	
-	if input.KeyCode == Enum.KeyCode.LeftShift then
+	if input.KeyCode == Enum.KeyCode.Q then
 		local direction = GetDirection()
-		if direction then
-			task.spawn(function()
-				DashModule.Execute(direction)
-			end)
-		end
+		task.spawn(function()
+			DashModule.Execute(direction)
+		end)
 	end
 end
 
