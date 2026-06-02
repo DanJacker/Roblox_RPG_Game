@@ -8,67 +8,67 @@
       "RemoteEvents": {
         "$path": "src/ReplicatedStorage/RemoteEvents",
         "BaseDangerEffect": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/BaseDangerEffect.meta.json"
+          "$className": "RemoteEvent"
         },
         "BaseDestroyed": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/BaseDestroyed.meta.json"
+          "$className": "RemoteEvent"
         },
         "BaseHealthUpdate": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/BaseHealthUpdate.meta.json"
+          "$className": "RemoteEvent"
         },
         "CombatRemote": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/CombatRemote.meta.json"
+          "$className": "RemoteEvent"
         },
         "FireballRemote": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/FireballRemote.meta.json"
+          "$className": "RemoteEvent"
         },
         "JoinQueue": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/JoinQueue.meta.json"
+          "$className": "RemoteEvent"
         },
         "KillEvent": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/KillEvent.meta.json"
+          "$className": "RemoteEvent"
         },
         "LeaveQueue": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/LeaveQueue.meta.json"
+          "$className": "RemoteEvent"
         },
         "LightBeamRemote": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/LightBeamRemote.meta.json"
+          "$className": "RemoteEvent"
         },
         "MatchEnded": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/MatchEnded.meta.json"
+          "$className": "RemoteEvent"
         },
         "MatchFound": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/MatchFound.meta.json"
+          "$className": "RemoteEvent"
         },
         "MatchStart": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/MatchStart.meta.json"
+          "$className": "RemoteEvent"
         },
         "MinimapEntityUpdate": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/MinimapEntityUpdate.meta.json"
+          "$className": "RemoteEvent"
         },
         "MinimapToggle": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/MinimapToggle.meta.json"
+          "$className": "RemoteEvent"
         },
         "MVPAnnouncement": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/MVPAnnouncement.meta.json"
+          "$className": "RemoteEvent"
         },
         "QueueStatus": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/QueueStatus.meta.json"
+          "$className": "RemoteEvent"
         },
         "RankUpdate": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/RankUpdate.meta.json"
+          "$className": "RemoteEvent"
         },
         "RequestRankUpdate": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/RequestRankUpdate.meta.json"
+          "$className": "RemoteEvent"
         },
         "RespawnEvent": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/RespawnEvent.meta.json"
+          "$className": "RemoteEvent"
         },
         "SpawnSelect": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/SpawnSelect.meta.json"
+          "$className": "RemoteEvent"
         },
         "VictoryAnnouncement": {
-          "$path": "src/ReplicatedStorage/RemoteEvents/VictoryAnnouncement.meta.json"
+          "$className": "RemoteEvent"
         }
       }
     },

@@ -240,6 +240,26 @@ end
 
 function SecureDataStore.Load(player)
 	local key = SecureDataStore.GetKey(player.UserId)
+	
+	-- In Studio mode, return default data
+	if RunService:IsStudio() then
+		local defaultData = {
+			HP = 150,
+			MaxHP = 150,
+			Level = 1,
+			Exp = 0,
+			Money = 0,
+			RankPoints = 0,
+			Wins = 0,
+			Losses = 0,
+			Draws = 0,
+			TotalMatches = 0,
+			LastPlayed = 0,
+		}
+		cache[player.UserId] = defaultData
+		return defaultData
+	end
+	
 	local success, result = pcall(function()
 		return dataStore:GetAsync(key)
 	end)
@@ -296,6 +316,11 @@ function SecureDataStore.ValidateData(data)
 end
 
 function SecureDataStore.Save(player, data)
+	-- Skip DataStore writes in Studio mode to avoid API access errors
+	if RunService:IsStudio() then
+		return true -- Silently succeed in Studio
+	end
+	
 	local key = SecureDataStore.GetKey(player.UserId)
 	local dataToSave = data or cache[player.UserId]
 	
