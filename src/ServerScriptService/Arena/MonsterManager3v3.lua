@@ -5,6 +5,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
+print("[MonsterManager3v3] Khoi dong...")
 
 local CONFIG = {
 	DETECTION_RANGE = 150,      -- Tang pham vi phat hien
@@ -18,13 +19,18 @@ local CONFIG = {
 	HP_REGEN = 5,
 	PATROL_RANGE = 40,
 	RETREAT_HEALTH = 0.20,     -- Giam nguong rut lui
-	RESPAWN_TIME = 12,
+	RESPAWN_TIME = 10,
 	MAX_MONSTERS = 12,
-	AGGRESSIVE_CHASE = true,    -- Kich hoat che do truy duoi hung manh
+	AGGRESSIVE_CHASE = false,    -- TAT: monster ngung duoi khi player di qua xa
+	MAX_CHASE_DISTANCE = 150,   -- Khoang cach toi da tu vi tri spawn, vuot qua thi quay ve
 	-- Safe zone config - players in their base are protected from monsters
 	SAFE_ZONE_RADIUS = 100,     -- Radius around each team base where players are safe
 	TEAM1_BASE_CENTER = Vector3.new(-385, 12, -7302),  -- Team1Base position
 	TEAM2_BASE_CENTER = Vector3.new(113, 12, -7811),   -- Team2Base position
+	-- Monster stop zone - monster ngung duoi khi den gan bat ky base nao
+	BASE_STOP_RADIUS = 120,       -- Monster ngung duoi khi trong ban kinh nay quanh bat ky base
+	-- Vi tri "cua" cua monster - monster quay ve day khi ngung duoi
+	MONSTER_DOOR_POSITION = Vector3.new(-136, 10, -7556), -- Khu rung (giua map)
 }
 
 local activeMonsters = {}
@@ -90,6 +96,19 @@ local function isInSafeZone(player, position)
 	end
 	
 	return false
+end
+
+-- Check if monster is too close to ANY team base - ngung duoi nua
+local function isNearAnyBase(monsterPosition)
+	local distanceToTeam1Base = (monsterPosition - CONFIG.TEAM1_BASE_CENTER).Magnitude
+	local distanceToTeam2Base = (monsterPosition - CONFIG.TEAM2_BASE_CENTER).Magnitude
+	return distanceToTeam1Base <= CONFIG.BASE_STOP_RADIUS or distanceToTeam2Base <= CONFIG.BASE_STOP_RADIUS
+end
+
+-- Monster quay ve "cua" cua minh (khu rung) khi ngung duoi
+local function returnToMonsterDoor(monsterData)
+	monsterData.state = "returningToDoor"
+	moveTo(monsterData, CONFIG.MONSTER_DOOR_POSITION)
 end
 
 local function findTarget(monsterData)
@@ -212,6 +231,20 @@ local function updateAI(monsterData)
 		return
 	end
 
+	-- Xu ly trang thai dang quay ve cua (khi ngung duoi gan team2)
+	if monsterData.state == "returningToDoor" then
+		local distToDoor = (hrp.Position - CONFIG.MONSTER_DOOR_POSITION).Magnitude
+		if distToDoor <= 15 then
+			-- Da ve den cua, chuyen sang patrol
+			monsterData.state = "patrolling"
+			monsterData.patrolTarget = nil
+		else
+			-- Van dang di ve cua
+			moveTo(monsterData, CONFIG.MONSTER_DOOR_POSITION)
+			return
+		end
+	end
+
 	-- Retreat khi HP thap
 	if shouldRetreat(monsterData) then
 		monsterData.state = "retreating"
@@ -220,6 +253,22 @@ local function updateAI(monsterData)
 		if monsterData.spawnPos then
 			moveTo(monsterData, monsterData.spawnPos)
 		end
+		return
+	end
+
+	-- KIEM TRA: Monster di qua xa tu vi tri spawn -> ngung duoi, quay ve spawn
+	local distFromSpawn = (hrp.Position - monsterData.spawnPos).Magnitude
+	if distFromSpawn > CONFIG.MAX_CHASE_DISTANCE then
+		monsterData.state = "returning"
+		h.WalkSpeed = CONFIG.WALK_SPEED
+		moveTo(monsterData, monsterData.spawnPos)
+		return
+	end
+
+	-- KIEM TRA: Monster den gan bat ky base nao -> ngung duoi, quay ve khu rung
+	if isNearAnyBase(hrp.Position) then
+		h.WalkSpeed = CONFIG.WALK_SPEED
+		returnToMonsterDoor(monsterData)
 		return
 	end
 
@@ -235,8 +284,8 @@ local function updateAI(monsterData)
 		if target.distance <= CONFIG.ATTACK_RANGE then
 			monsterData.state = "attacking"
 			attack(monsterData, target)
-		elseif target.distance <= CONFIG.CHASE_RANGE or (CONFIG.AGGRESSIVE_CHASE and target.type == "player") then
-			-- Truy duoi neu trong CHASE_RANGE hoac AGGRESSIVE_CHASE voi player
+		elseif target.distance <= CONFIG.CHASE_RANGE then
+			-- Chi duoi trong pham vi CHASE_RANGE (khong AGGRESSIVE_CHASE nua)
 			monsterData.state = "chasing"
 			moveTo(monsterData, target.position)
 			
@@ -247,8 +296,10 @@ local function updateAI(monsterData)
 					monsterData.name, target.instance.Name, target.distance))
 			end
 		else
-			monsterData.state = "idle"
+			-- Player qua xa -> ngung duoi, quay ve spawn
+			monsterData.state = "returning"
 			h.WalkSpeed = CONFIG.WALK_SPEED
+			moveTo(monsterData, monsterData.spawnPos)
 		end
 	else
 		-- Reset toc do khi khong co muc tieu
@@ -263,7 +314,9 @@ local function updateAI(monsterData)
 end
 
 local function spawnMonster(spawnPos)
-	if #activeMonsters >= CONFIG.MAX_MONSTERS then return nil end
+	local count = 0
+	for _ in pairs(activeMonsters) do count = count + 1 end
+	if count >= CONFIG.MAX_MONSTERS then return nil end
 
 	monsterCounter = monsterCounter + 1
 	local name = string.format("[MONSTER-3v3] Beast%d", monsterCounter)
@@ -311,6 +364,7 @@ local function spawnMonster(spawnPos)
 		end)
 	end
 
+	print(string.format("[MonsterManager3v3] Spawned: %s", name))
 	return monsterData
 end
 
@@ -344,5 +398,6 @@ RunService.Heartbeat:Connect(function(deltaTime)
 end)
 
 _G.MonsterManager3v3 = MonsterManager3v3
+print("[MonsterManager3v3] San sang!")
 
 return MonsterManager3v3
