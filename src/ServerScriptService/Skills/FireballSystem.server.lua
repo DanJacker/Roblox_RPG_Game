@@ -17,7 +17,19 @@ local fireballTemplate = effectsFolder and effectsFolder:FindFirstChild("Firebal
 local impactTemplate = effectsFolder and effectsFolder:FindFirstChild("FireballImpactVFX")
 
 -- RemoteEvent for client communication
-local fireballRemote = ReplicatedStorage:FindFirstChild("FireballRemote")
+local remoteEventsFolder = ReplicatedStorage:FindFirstChild("RemoteEvents")
+if not remoteEventsFolder then
+    remoteEventsFolder = Instance.new("Folder")
+    remoteEventsFolder.Name = "RemoteEvents"
+    remoteEventsFolder.Parent = ReplicatedStorage
+end
+
+local fireballRemote = remoteEventsFolder:FindFirstChild("FireballRemote")
+if not fireballRemote then
+    fireballRemote = Instance.new("RemoteEvent")
+    fireballRemote.Name = "FireballRemote"
+    fireballRemote.Parent = remoteEventsFolder
+end
 
 -- Track cooldowns per player
 local cooldowns = {}

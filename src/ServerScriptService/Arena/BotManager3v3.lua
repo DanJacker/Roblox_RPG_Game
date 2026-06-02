@@ -848,7 +848,6 @@ function BotManager3v3.GetBotCountByTeam(teamName)
 		if data.team == teamName and data.state ~= "dead" then
 			c = c + 1
 		end
-		end
 	end
 	return c
 end

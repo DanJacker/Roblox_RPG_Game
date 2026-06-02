@@ -5,7 +5,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local COOLDOWN = 15
 local lastFireTime = 0
 
-local rocketRemote = ReplicatedStorage:WaitForChild("JinxRocketRemote")
+local remoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
+local rocketRemote = remoteEvents:WaitForChild("JinxRocketRemote", 5)
 
 local function fireRocket()
     local currentTime = tick()

@@ -14,9 +14,19 @@ local COOLDOWN = 15
 local GROWTH_RATE = 3.0 -- Tốc độ to lên (gấp đôi)
 
 -- RemoteEvent
-local rocketRemote = Instance.new("RemoteEvent")
-rocketRemote.Name = "JinxRocketRemote"
-rocketRemote.Parent = ReplicatedStorage
+local remoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents")
+if not remoteEvents then
+    remoteEvents = Instance.new("Folder")
+    remoteEvents.Name = "RemoteEvents"
+    remoteEvents.Parent = ReplicatedStorage
+end
+
+local rocketRemote = remoteEvents:FindFirstChild("JinxRocketRemote")
+if not rocketRemote then
+    rocketRemote = Instance.new("RemoteEvent")
+    rocketRemote.Name = "JinxRocketRemote"
+    rocketRemote.Parent = remoteEvents
+end
 
 -- Track cooldowns
 local cooldowns = {}

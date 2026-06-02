@@ -24,7 +24,19 @@ local impactTemplate = effectsFolder and effectsFolder:FindFirstChild("LightBeam
 local startTemplate = effectsFolder and effectsFolder:FindFirstChild("BeamStartVFX")
 
 -- RemoteEvent for client communication
-local lightBeamRemote = ReplicatedStorage:FindFirstChild("LightBeamRemote")
+local remoteEventsFolder = ReplicatedStorage:FindFirstChild("RemoteEvents")
+if not remoteEventsFolder then
+    remoteEventsFolder = Instance.new("Folder")
+    remoteEventsFolder.Name = "RemoteEvents"
+    remoteEventsFolder.Parent = ReplicatedStorage
+end
+
+local lightBeamRemote = remoteEventsFolder:FindFirstChild("LightBeamRemote")
+if not lightBeamRemote then
+    lightBeamRemote = Instance.new("RemoteEvent")
+    lightBeamRemote.Name = "LightBeamRemote"
+    lightBeamRemote.Parent = remoteEventsFolder
+end
 
 -- Track cooldowns per player
 local cooldowns = {}

@@ -187,6 +187,11 @@ function DashModule.Execute(direction: string)
 		forceField.Parent = character
 	end
 	
+	-- Giữ character ổn định trong khi dash
+	local originalPlatformStand = humanoid.PlatformStand
+	humanoid.PlatformStand = true
+	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+
 	-- Use pcall to ensure isDashing is always reset
 	local success, err = pcall(function()
 		-- Play animation
@@ -204,8 +209,8 @@ function DashModule.Execute(direction: string)
 		
 		-- Create BodyVelocity
 		local bodyVelocity = Instance.new("BodyVelocity")
-		bodyVelocity.MaxForce = Vector3.new(math.huge, 0, math.huge)
-		bodyVelocity.Velocity = Vector3.new(dashDirection.X * DASH_SPEED, rootPart.AssemblyLinearVelocity.Y, dashDirection.Z * DASH_SPEED)
+		bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		bodyVelocity.Velocity = Vector3.new(dashDirection.X * DASH_SPEED, 0, dashDirection.Z * DASH_SPEED)
 		bodyVelocity.Parent = rootPart
 		
 		-- Dash for duration
@@ -214,15 +219,9 @@ function DashModule.Execute(direction: string)
 		-- Clean up
 		bodyVelocity:Destroy()
 	end)
-	
-	-- ========== KHÔI PHỤC COLLISION ==========
-	if DISABLE_COLLISIONS then
-		for part, originalValue in pairs(originalCollisions) do
-			if part and part.Parent then
-				part.CanCollide = originalValue
-			end
-		end
-	end
+
+	-- Khôi phục trạng thái PlatformStand
+	humanoid.PlatformStand = originalPlatformStand
 	
 	-- ========== XÓA FORCEFIELD ==========
 	if forceField then
