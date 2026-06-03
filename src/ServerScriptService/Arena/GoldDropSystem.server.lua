@@ -125,6 +125,16 @@ local function onPlayerDeath(player)
     -- Lấy thông tin killer
     local killer = playerLastAttacker[player.UserId]
     
+    -- Trừ vàng của người chết
+    local deadPlayerData = PlayerData.Get(player)
+    if deadPlayerData then
+        local currentMoney = deadPlayerData.Money or 0
+        local goldToLose = math.min(GOLD_ON_PLAYER_DEATH, currentMoney)
+        if goldToLose > 0 then
+            PlayerData.Set(player, "Money", currentMoney - goldToLose)
+        end
+    end
+    
     -- Lấy vị trí chết
     if player.Character then
         local hrp = player.Character:FindFirstChild("HumanoidRootPart")

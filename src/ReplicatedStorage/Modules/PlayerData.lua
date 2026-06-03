@@ -112,12 +112,16 @@ function PlayerData.ShowLeaderstats(player)
 	teamStat.Value = player.Team and player.Team.Name or "None"
 	teamStat.Parent = leaderstats
 	
-	-- Thêm các stats khác
-	for key, value in pairs(data[player.UserId]) do
-		local stat = Instance.new("IntValue")
-		stat.Name = key
-		stat.Value = value
-		stat.Parent = leaderstats
+	-- Chỉ hiện các stats quan trọng trên leaderboard (thứ tự quan trọng)
+	local displayStats = {"Level", "Exp", "Money"}
+	for _, key in ipairs(displayStats) do
+		local value = data[player.UserId][key]
+		if value ~= nil then
+			local stat = Instance.new("IntValue")
+			stat.Name = key
+			stat.Value = value
+			stat.Parent = leaderstats
+		end
 	end
 	
 end

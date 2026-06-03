@@ -64,7 +64,7 @@ local function collectExp(orb, player)
         local newExp = currentExp + actualExp
         
         -- Kiểm tra level up
-        local expNeeded = currentLevel * 100
+        local expNeeded = 50 * math.pow(2, currentLevel - 1)
         if newExp >= expNeeded then
             PlayerData.Set(player, "Level", currentLevel + 1)
             PlayerData.Set(player, "Exp", newExp - expNeeded)

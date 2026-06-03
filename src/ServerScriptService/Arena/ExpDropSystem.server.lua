@@ -150,6 +150,12 @@ local function onPlayerDeath(player)
 	expToDrop = math.max(MIN_EXP_DROP, expToDrop) -- Tối thiểu
 	expToDrop = math.min(MAX_EXP_DROP, expToDrop) -- Tối đa
 
+	-- Trừ EXP của người chết
+	if playerData and expToDrop > 0 then
+		local newExp = math.max(0, currentExp - expToDrop)
+		PlayerData.Set(player, "Exp", newExp)
+	end
+
 	-- Lấy vị trí chết
 	if player.Character then
 		local hrp = player.Character:FindFirstChild("HumanoidRootPart")
@@ -182,7 +188,7 @@ local function onPlayerDeath(player)
 					PlayerData.Set(killer, "Exp", newExp)
 
 					-- Kiểm tra level up
-					local expNeeded = killerLevel * 100
+					local expNeeded = 50 * math.pow(2, killerLevel - 1)
 					if newExp >= expNeeded then
 						PlayerData.Set(killer, "Level", killerLevel + 1)
 						PlayerData.Set(killer, "Exp", newExp - expNeeded)

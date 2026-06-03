@@ -1,0 +1,154 @@
+-- ExpHudClient - Hiển thị thanh HP và EXP trên màn hình
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ========== TẠO GUI ==========
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ExpHudGui"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+-- Container chính (giữa màn hình, phía dưới)
+local container = Instance.new("Frame")
+container.Name = "HudContainer"
+container.Size = UDim2.new(0, 260, 0, 80)
+container.Position = UDim2.new(0.5, -130, 1, -100)
+container.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+container.BackgroundTransparency = 0.3
+container.BorderSizePixel = 0
+container.Parent = screenGui
+
+local containerCorner = Instance.new("UICorner")
+containerCorner.CornerRadius = UDim.new(0, 10)
+containerCorner.Parent = container
+
+local containerStroke = Instance.new("UIStroke")
+containerStroke.Color = Color3.fromRGB(80, 80, 100)
+containerStroke.Thickness = 1.5
+containerStroke.Parent = container
+
+-- ========== HP BAR ==========
+local hpLabel = Instance.new("TextLabel")
+hpLabel.Name = "HpLabel"
+hpLabel.Size = UDim2.new(1, -20, 0, 14)
+hpLabel.Position = UDim2.new(0, 10, 0, 6)
+hpLabel.BackgroundTransparency = 1
+hpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+hpLabel.TextStrokeTransparency = 0.5
+hpLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+hpLabel.Font = Enum.Font.GothamBold
+hpLabel.TextSize = 12
+hpLabel.TextXAlignment = Enum.TextXAlignment.Left
+hpLabel.Text = "HP 150/150"
+hpLabel.Parent = container
+
+local hpBarBg = Instance.new("Frame")
+hpBarBg.Name = "HpBarBg"
+hpBarBg.Size = UDim2.new(1, -20, 0, 16)
+hpBarBg.Position = UDim2.new(0, 10, 0, 22)
+hpBarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+hpBarBg.BorderSizePixel = 0
+hpBarBg.Parent = container
+
+local hpBarBgCorner = Instance.new("UICorner")
+hpBarBgCorner.CornerRadius = UDim.new(0, 6)
+hpBarBgCorner.Parent = hpBarBg
+
+local hpBarFill = Instance.new("Frame")
+hpBarFill.Name = "HpBarFill"
+hpBarFill.Size = UDim2.new(1, 0, 1, 0)
+hpBarFill.BackgroundColor3 = Color3.fromRGB(0, 220, 80)
+hpBarFill.BorderSizePixel = 0
+hpBarFill.Parent = hpBarBg
+
+local hpBarFillCorner = Instance.new("UICorner")
+hpBarFillCorner.CornerRadius = UDim.new(0, 6)
+hpBarFillCorner.Parent = hpBarFill
+
+-- ========== EXP BAR ==========
+local expLabel = Instance.new("TextLabel")
+expLabel.Name = "ExpLabel"
+expLabel.Size = UDim2.new(1, -20, 0, 14)
+expLabel.Position = UDim2.new(0, 10, 0, 42)
+expLabel.BackgroundTransparency = 1
+expLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+expLabel.TextStrokeTransparency = 0.5
+expLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+expLabel.Font = Enum.Font.GothamBold
+expLabel.TextSize = 12
+expLabel.TextXAlignment = Enum.TextXAlignment.Left
+expLabel.Text = "EXP 0/100  Lv.1"
+expLabel.Parent = container
+
+local expBarBg = Instance.new("Frame")
+expBarBg.Name = "ExpBarBg"
+expBarBg.Size = UDim2.new(1, -20, 0, 16)
+expBarBg.Position = UDim2.new(0, 10, 0, 58)
+expBarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+expBarBg.BorderSizePixel = 0
+expBarBg.Parent = container
+
+local expBarBgCorner = Instance.new("UICorner")
+expBarBgCorner.CornerRadius = UDim.new(0, 6)
+expBarBgCorner.Parent = expBarBg
+
+local expBarFill = Instance.new("Frame")
+expBarFill.Name = "ExpBarFill"
+expBarFill.Size = UDim2.new(0, 0, 1, 0)
+expBarFill.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+expBarFill.BorderSizePixel = 0
+expBarFill.Parent = expBarBg
+
+local expBarFillCorner = Instance.new("UICorner")
+expBarFillCorner.CornerRadius = UDim.new(0, 6)
+expBarFillCorner.Parent = expBarFill
+
+-- ========== CẬP NHẬT MỖI FRAME ==========
+local function updateHud()
+    local character = player.Character
+    if not character then return end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    -- Cập nhật HP bar
+    local hp = math.floor(humanoid.Health)
+    local maxHp = math.floor(humanoid.MaxHealth)
+    local hpPercent = math.clamp(humanoid.MaxHealth > 0 and hp / maxHp or 0, 0, 1)
+    
+    hpBarFill.Size = UDim2.new(hpPercent, 0, 1, 0)
+    hpLabel.Text = string.format("HP %d/%d", hp, maxHp)
+    
+    -- Đổi màu HP theo lượng máu
+    if hpPercent > 0.6 then
+        hpBarFill.BackgroundColor3 = Color3.fromRGB(0, 220, 80)
+    elseif hpPercent > 0.3 then
+        hpBarFill.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+    else
+        hpBarFill.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    end
+    
+    -- Cập nhật EXP bar từ leaderstats
+    local leaderstats = player:FindFirstChild("leaderstats")
+    if leaderstats then
+        local expStat = leaderstats:FindFirstChild("Exp")
+        local levelStat = leaderstats:FindFirstChild("Level")
+        
+        local exp = expStat and expStat.Value or 0
+        local level = levelStat and levelStat.Value or 1
+        local expNeeded = 50 * math.pow(2, level - 1)
+        local expPercent = math.clamp(expNeeded > 0 and exp / expNeeded or 0, 0, 1)
+        
+        expBarFill.Size = UDim2.new(expPercent, 0, 1, 0)
+        expLabel.Text = string.format("EXP %d/%d  Lv.%d", exp, expNeeded, level)
+    else
+        expBarFill.Size = UDim2.new(0, 0, 1, 0)
+        expLabel.Text = "EXP 0/100  Lv.1"
+    end
+end
+
+RunService.Heartbeat:Connect(updateHud)
