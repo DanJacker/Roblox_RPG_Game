@@ -11,7 +11,7 @@ local remoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents")
 if not remoteEvents then
     remoteEvents = Instance.new("Folder")
     remoteEvents.Name = "RemoteEvents"
-    remoteEvents.Parent = ReplicatedStorage
+    remoteEvents.Parent = ReplicatedStoragef:\roblox code\Roblox_RPG_Game
 end
 
 local JoinQueue = remoteEvents:FindFirstChild("JoinQueue")

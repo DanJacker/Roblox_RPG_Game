@@ -4,8 +4,10 @@ local Workspace = game:GetService("Workspace")
 local PlayerData = require(ReplicatedStorage.Modules.PlayerData)
 
 -- Cấu hình
-local AUTO_COLLECT_RANGE = 8 -- Khoảng cách tự động thu thập
-local DESPAWN_TIME = 60 -- Tự xóa sau 60 giây
+local MAGNET_RANGE = 25 -- Khoảng cách bắt đầu hút orb về phía player
+local AUTO_COLLECT_RANGE = 3 -- Khoảng cách tự động thu thập (khi orb chạm player)
+local MAGNET_SPEED = 40 -- Tốc độ hút orb (studs/giây)
+local DESPAWN_TIME = 10 -- Tự xóa sau 10 giây
 
 -- Theo dõi tất cả GoldOrb trong Workspace
 local goldOrbs = {}
@@ -14,6 +16,12 @@ local goldOrbs = {}
 local function collectGold(orb, player)
     if not orb or not orb.Parent then return end
     if goldOrbs[orb] and goldOrbs[orb].isCollected then return end
+    
+    -- Kiểm tra: không cho player nhặt lại vàng của chính mình
+    local droppedByAttr = orb:FindFirstChild("DroppedBy")
+    if droppedByAttr and droppedByAttr.Value ~= "" and droppedByAttr.Value == player.Name then
+        return -- Player không thể nhặt vàng của chính mình
+    end
     
     -- Đánh dấu đã thu thập
     if goldOrbs[orb] then
@@ -92,28 +100,51 @@ local function setupOrbTouch(orb)
     end)
 end
 
--- Hệ thống tự động thu thập khi player đến gần
+-- Hệ thống tự động hút và thu thập khi player đến gần
 local function updateGoldOrbs()
     while true do
         for orb, data in pairs(goldOrbs) do
             if not data.isCollected and orb and orb.Parent then
-                -- Tìm player gần nhất trong phạm vi
+                -- Tìm player gần nhất trong phạm vi magnet
+                local closestPlayer = nil
+                local closestDistance = math.huge
+                
                 for _, player in Players:GetPlayers() do
                     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        -- Kiểm tra: không hút orb của chính mình
+                        local droppedByAttr = orb:FindFirstChild("DroppedBy")
+                        if droppedByAttr and droppedByAttr.Value ~= "" and droppedByAttr.Value == player.Name then
+                            continue -- Bỏ qua player là chủ của orb
+                        end
+                        
                         local hrp = player.Character.HumanoidRootPart
                         local distance = (hrp.Position - orb.Position).Magnitude
                         
-                        -- Tự động thu thập khi player đến gần
-                        if distance < AUTO_COLLECT_RANGE then
-                            collectGold(orb, player)
-                            break -- Dừng kiểm tra player khác sau khi thu thập
+                        if distance < closestDistance then
+                            closestPlayer = player
+                            closestDistance = distance
+                        end
+                    end
+                end
+                
+                if closestPlayer and closestDistance < MAGNET_RANGE then
+                    local hrp = closestPlayer.Character and closestPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        if closestDistance < AUTO_COLLECT_RANGE then
+                            -- Thu thập khi orb chạm player
+                            collectGold(orb, closestPlayer)
+                        else
+                            -- Hút orb bay về phía player
+                            local direction = (hrp.Position - orb.Position).Unit
+                            local moveDistance = math.min(MAGNET_SPEED * 0.03, closestDistance)
+                            orb.Position = orb.Position + direction * moveDistance
                         end
                     end
                 end
             end
         end
         
-        task.wait(0.1) -- Kiểm tra mỗi 0.1 giây (đủ nhanh và ít lag)
+        task.wait(0.03) -- Kiểm tra mỗi 0.03 giây cho hiệu ứng mượt hơn
     end
 end
 
@@ -122,10 +153,11 @@ Workspace.DescendantAdded:Connect(function(descendant)
     if descendant.Name == "Orb" and descendant:IsA("BasePart") then
         local parent = descendant.Parent
         if parent and parent.Name == "GoldOrb" then
-            -- Lưu thông tin orb (không còn cần baseY vì không floating)
+            -- Lưu thông tin orb với baseY cho hiệu ứng floating
             goldOrbs[descendant] = {
                 isCollected = false,
-                spawnTime = tick()
+                spawnTime = tick(),
+                baseY = descendant.Position.Y,
             }
             
             -- Setup touch event
@@ -161,10 +193,11 @@ local function scanExistingGoldOrbs()
         if descendant.Name == "Orb" and descendant:IsA("BasePart") then
             local parent = descendant.Parent
             if parent and parent.Name == "GoldOrb" then
-                -- Lưu thông tin orb (không còn cần baseY)
+                -- Lưu thông tin orb với baseY cho hiệu ứng floating
                 goldOrbs[descendant] = {
                     isCollected = false,
-                    spawnTime = tick()
+                    spawnTime = tick(),
+                    baseY = descendant.Position.Y,
                 }
                 
                 -- Setup touch event

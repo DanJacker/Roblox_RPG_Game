@@ -2,6 +2,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
+-- Modules
+local PlayerData = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("PlayerData"))
+
 -- Cấu hình
 local GOLD_ON_NPC_DEATH = 15 -- Số vàng rơi ra khi quái/bot chết
 local GOLD_ON_PLAYER_DEATH = 20 -- Số vàng rơi ra khi player chết
@@ -36,7 +39,7 @@ end
 
 -- Hàm tạo Gold Orb tại vị trí
 local function spawnGoldOrbs(position, goldValue, killer)
-    local goldOrbTemplate = ReplicatedStorage:FindFirstChild("GoldOrb")
+    local goldOrbTemplate = ReplicatedStorage:FindFirstChild("Assets") and ReplicatedStorage.Assets:FindFirstChild("GoldOrb") or ReplicatedStorage:FindFirstChild("GoldOrb")
     if not goldOrbTemplate then
         warn("Không tìm thấy GoldOrb template!")
         return
@@ -50,25 +53,41 @@ local function spawnGoldOrbs(position, goldValue, killer)
         -- Random vị trí xung quanh điểm chết
         local offsetX = (math.random() - 0.5) * SPREAD_RADIUS * 2
         local offsetZ = (math.random() - 0.5) * SPREAD_RADIUS * 2
-        local spawnPosition = position + Vector3.new(offsetX, 0, offsetZ)
-        
-        -- Tìm mặt đất
-        local groundPosition = findGround(spawnPosition)
         
         -- Clone Gold Orb
         local goldOrb = goldOrbTemplate:Clone()
         local orb = goldOrb:FindFirstChild("Orb")
         
         if orb then
-            -- Đặt orb trực tiếp trên mặt đất
-            orb.Position = groundPosition + Vector3.new(0, 1, 0) -- 1 stud trên mặt đất
-            orb.Anchored = true -- Giữ orb cố định trên mặt đất
+            -- Đặt orb tại vị trí chết, để rơi tự do xuống đất
+            orb.Position = position + Vector3.new(offsetX, 2, offsetZ)
+            orb.Anchored = false
+            orb.CanCollide = true
+            
+            -- Tốc độ bay ra xung quanh rồi rơi xuống
+            local randomVelX = (math.random() - 0.5) * 12
+            local randomVelZ = (math.random() - 0.5) * 12
+            orb.AssemblyLinearVelocity = Vector3.new(randomVelX, 20, randomVelZ)
+            
+            -- Neo orb lại sau khi rơi xuống đất
+            task.delay(0.8, function()
+                if orb and orb.Parent then
+                    orb.Anchored = true
+                    orb.CanCollide = false
+                end
+            end)
             
             -- Cập nhật giá trị vàng cho orb
             local goldValueAttr = orb:FindFirstChild("GoldValue")
             if goldValueAttr then
                 goldValueAttr.Value = goldPerOrb
             end
+            
+            -- Lưu thông tin người bị hạ (để ngăn họ tự nhặt lại)
+            local droppedByAttr = Instance.new("StringValue")
+            droppedByAttr.Name = "DroppedBy"
+            droppedByAttr.Value = "" -- sẽ được set ở onPlayerDeath
+            droppedByAttr.Parent = orb
             
             -- Lưu thông tin killer (người hạ gục)
             if killer then
@@ -111,8 +130,30 @@ local function onPlayerDeath(player)
         local hrp = player.Character:FindFirstChild("HumanoidRootPart")
         if hrp then
             spawnGoldOrbs(hrp.Position, GOLD_ON_PLAYER_DEATH, killer)
+            
+            -- Đánh dấu tất cả orb vừa rơi là của player chết (ngăn họ tự nhặt)
+            -- Sử dụng task.defer để đảm bảo orb đã được tạo
+            local deadPlayerName = player.Name
+            task.defer(function()
+                for _, descendant in Workspace:GetDescendants() do
+                    if descendant.Name == "Orb" and descendant:IsA("BasePart") then
+                        local parent = descendant.Parent
+                        if parent and parent.Name == "GoldOrb" then
+                            local droppedBy = descendant:FindFirstChild("DroppedBy")
+                            if droppedBy and droppedBy.Value == "" then
+                                droppedBy.Value = deadPlayerName
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            -- Tự động thưởng vàng cho killer
             if killer then
-            else
+                local killerData = PlayerData.Get(killer)
+                if killerData then
+                    PlayerData.Set(killer, "Money", killerData.Money + GOLD_ON_PLAYER_DEATH)
+                end
             end
         end
     end
