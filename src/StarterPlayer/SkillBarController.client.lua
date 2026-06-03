@@ -18,6 +18,7 @@ local cooldownTimers = {} -- [skillId] = lastUseTime
 local selectedInventorySkill = nil -- Currently selected skill in inventory UI
 local isGachaOpen = false
 local isInventoryOpen = false
+local devMode = false -- Dev mode bypasses cooldowns
 
 -- ========== GUI REFERENCES (built programmatically) ==========
 local screenGui
@@ -36,6 +37,7 @@ local function getSkillInfo(skillId)
 end
 
 local function isOnCooldown(skillId)
+	if devMode then return false end
 	local info = getSkillInfo(skillId)
 	if not info then return false end
 	local lastUse = cooldownTimers[skillId] or 0
@@ -1262,6 +1264,19 @@ if remotes then
 	if gachaRemote then
 		gachaRemote.OnClientEvent:Connect(function(data)
 			onGachaResult(data)
+		end)
+	end
+
+	-- Dev mode toggle from server
+	local devRemote = remotes:FindFirstChild("DevModeRemote")
+	if devRemote then
+		devRemote.OnClientEvent:Connect(function(enabled)
+			devMode = enabled
+			if enabled then
+				print("[SkillBarController] DEV MODE ON - cooldowns bypassed")
+			else
+				print("[SkillBarController] DEV MODE OFF - normal cooldowns")
+			end
 		end)
 	end
 end

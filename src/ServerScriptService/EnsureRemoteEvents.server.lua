@@ -28,7 +28,8 @@ local required = {
     "GenericSkillRemote",
     "LevelUpRemote",
     "SkillSlotRemote",
-    "SkillSyncRemote"
+    "SkillSyncRemote",
+    "DevModeRemote"
 }
 
 local function ensure()

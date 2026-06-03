@@ -48,6 +48,7 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(255, 80, 20),
 		cooldown = 3,
 		damage = 15,
+		skillType = "Projectile",
 		description = "Ban mot luong lua ve phia doi thu.",
 	},
 	IceShard = {
@@ -56,6 +57,9 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(100, 200, 255),
 		cooldown = 3.5,
 		damage = 12,
+		skillType = "Projectile",
+		speed = 90,
+		size = Vector3.new(1.2, 1.2, 2.5),
 		description = "Ban mot mau bang nho.",
 	},
 	WindSlash = {
@@ -64,6 +68,8 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(180, 255, 180),
 		cooldown = 2.5,
 		damage = 10,
+		skillType = "Melee",
+		range = 10,
 		description = "Tao mot luong gio cat.",
 	},
 	LightBeam = {
@@ -72,6 +78,7 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(255, 255, 150),
 		cooldown = 5,
 		damage = 25,
+		skillType = "Projectile",
 		description = "Tia sang phang doi thu.",
 	},
 	ShadowStrike = {
@@ -80,6 +87,8 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(80, 0, 120),
 		cooldown = 4,
 		damage = 22,
+		skillType = "Melee",
+		range = 7,
 		description = "Tan cong tu bong toi.",
 	},
 	ThunderBolt = {
@@ -88,6 +97,8 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(255, 255, 50),
 		cooldown = 4.5,
 		damage = 28,
+		skillType = "AoE",
+		radius = 12,
 		description = "Goi set danh doi thu.",
 	},
 	JinxRocket = {
@@ -96,6 +107,7 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(255, 50, 150),
 		cooldown = 6,
 		damage = 35,
+		skillType = "Projectile",
 		description = "Ban ten lua no lon.",
 	},
 	FrostNova = {
@@ -104,6 +116,8 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(50, 150, 255),
 		cooldown = 7,
 		damage = 30,
+		skillType = "AoE",
+		radius = 18,
 		description = "No bang vung rong lam cham doi thu.",
 	},
 	MeteorStrike = {
@@ -112,6 +126,8 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(255, 100, 0),
 		cooldown = 10,
 		damage = 50,
+		skillType = "AoE",
+		radius = 22,
 		description = "Goi thien thach tu tren troi xuong!",
 	},
 	VoidBlast = {
@@ -120,6 +136,8 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(100, 0, 200),
 		cooldown = 9,
 		damage = 45,
+		skillType = "AoE",
+		radius = 16,
 		description = "Phat no nang luong khoang khong.",
 	},
 	DivineShield = {
@@ -128,6 +146,8 @@ SkillConfig.Skills = {
 		color = Color3.fromRGB(255, 215, 0),
 		cooldown = 12,
 		damage = 0,
+		skillType = "Heal",
+		healAmount = 80,
 		description = "Bao ve than thanh chong sat thuong.",
 	},
 }

@@ -338,6 +338,41 @@ local function onGenericSkill(player, skillId, position)
 	end
 end
 
+-- ========== DEV UNLOCK ALL ==========
+function _G.DevUnlockAllSkills(player)
+	local data = getSkillData(player)
+	if not data then
+		initPlayerSkillData(player)
+		data = getSkillData(player)
+	end
+	if not data then return false end
+
+	-- Add all skills to inventory
+	for skillId, _ in pairs(SkillConfig.Skills) do
+		if not table.find(data.inventory, skillId) then
+			table.insert(data.inventory, skillId)
+		end
+	end
+
+	-- Assign first 4 skills to Z/X/C/V slots
+	local slotIndex = 1
+	for skillId, _ in pairs(SkillConfig.Skills) do
+		if slotIndex <= 4 then
+			local slotKey = SkillConfig.SlotKeys[slotIndex]
+			if slotKey then
+				data.slots[slotKey] = skillId
+			end
+			slotIndex = slotIndex + 1
+		end
+	end
+
+	-- Give 99 pending gacha rolls
+	data.pendingGachaRolls = 99
+
+	syncToClient(player)
+	return true
+end
+
 -- ========== GIVE GACHA ROLL (called from ExpCollectionSystem on level up) ==========
 function _G.GiveGachaRoll(player)
 	local data = getSkillData(player)
