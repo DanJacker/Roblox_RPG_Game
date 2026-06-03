@@ -6,6 +6,7 @@
     "ReplicatedStorage": {
       "$path": "src/ReplicatedStorage",
       "RemoteEvents": {
+        "$className": "Folder",
         "BaseDangerEffect": {
           "$className": "RemoteEvent"
         },

@@ -133,6 +133,7 @@ end
 -- ========== LANE SYSTEM ==========
 local LANE_NAMES = {"Left", "Mid", "Right"}
 local laneAssignmentCounter = {Team1 = 0, Team2 = 0}
+local botAttackBase
 
 -- ========== GENERATE LANE WAYPOINTS ==========
 local function generateLaneWaypoints(myBase, enemyBase, laneName, mapName)
@@ -535,8 +536,8 @@ local function updateAI(botData)
 			botData.state = "following_lane"
 			botData.currentTarget = nil
 			h.WalkSpeed = CONFIG.WALK_SPEED
-			if base then
-				smartMoveTo(botData, base.position)
+			if spawnPos then
+				smartMoveTo(botData, spawnPos)
 			end
 			return
 		end
@@ -771,7 +772,7 @@ local function spawnBot(teamName, spawnPos, laneName)
 end
 
 -- ========== BOT ATTACK BASE FUNCTION ==========
-local function botAttackBase(baseModel, defendingTeam, attackerName, attackerTeam, damage)
+botAttackBase = function(baseModel, defendingTeam, attackerName, attackerTeam, damage)
 	if not baseModel then return end
 
 	local baseHumanoid = baseModel:FindFirstChild("BaseHumanoid")

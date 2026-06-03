@@ -8,7 +8,6 @@ local COOLDOWN = 0.5
 -- ========== CONFIG CHO AN TOÀN DASH ==========
 local DISABLE_COLLISIONS = true -- Tắt collision khi dash để không bị văng
 local USE_FORCEFIELD = true -- Thêm ForceField để bảo vệ khỏi fling
-
 local Animations = ReplicatedStorage:WaitForChild("Animations", 10)
 local Effects = ReplicatedStorage:FindFirstChild("Effects")
 
@@ -188,11 +187,32 @@ function DashModule.Execute(direction: string)
 	end
 	
 	-- Giữ character ổn định trong khi dash
-	local originalPlatformStand = humanoid.PlatformStand
 	humanoid.PlatformStand = true
 	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
 
-	-- Use pcall to ensure isDashing is always reset
+	-- ========== PHÁT HIỆN VA CHẠM ĐỂ DỪNG DASH ==========
+	local dashCancelled = false
+
+	local touchConn
+	touchConn = rootPart.Touched:Connect(function(hit)
+		if dashCancelled then return end
+		if not hit or not hit.Parent then return end
+		
+		-- Bỏ qua các part thuộc character của mình
+		if hit:IsDescendantOf(character) then return end
+		
+		-- Bỏ qua Tool
+		if hit.Parent and hit.Parent:IsA("Tool") then return end
+		
+		-- Bỏ qua các part thuộc character người khác (không dừng khi chạm người)
+		local hitHumanoid = hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid")
+		if hitHumanoid then return end
+		
+		-- Chạm vật thể thế giới (tường, đá, sàn...) → dừng dash
+		dashCancelled = true
+	end)
+
+	-- Use pcall to ensure cleanup always runs
 	local success, err = pcall(function()
 		-- Play animation
 		PlayAnimation(character, direction)
@@ -213,15 +233,34 @@ function DashModule.Execute(direction: string)
 		bodyVelocity.Velocity = Vector3.new(dashDirection.X * DASH_SPEED, 0, dashDirection.Z * DASH_SPEED)
 		bodyVelocity.Parent = rootPart
 		
-		-- Dash for duration
-		task.wait(DASH_DURATION)
+		-- Dash cho đến khi hết thời gian HOẶC chạm vật thể
+		local startTime = tick()
+		while task.wait() do
+			if dashCancelled then break end
+			if tick() - startTime >= DASH_DURATION then break end
+		end
 		
 		-- Clean up
 		bodyVelocity:Destroy()
 	end)
+	
+	-- Ngắt kết nối Touched event
+	if touchConn then
+		touchConn:Disconnect()
+	end
 
-	-- Khôi phục trạng thái PlatformStand
-	humanoid.PlatformStand = originalPlatformStand
+	-- ========== KHÔI PHỤC TRẠNG THÁI ==========
+	-- Khôi phục PlatformStand
+	humanoid.PlatformStand = false
+	
+	-- Khôi phục collision
+	if DISABLE_COLLISIONS then
+		for part, originalCanCollide in pairs(originalCollisions) do
+			if part and part.Parent then
+				part.CanCollide = originalCanCollide
+			end
+		end
+	end
 	
 	-- ========== XÓA FORCEFIELD ==========
 	if forceField then
@@ -230,6 +269,16 @@ function DashModule.Execute(direction: string)
 	
 	-- Xóa VFX
 	CleanupDashVFX(dashVFX)
+	
+	-- Dừng velocity dư thừa sau dash
+	if rootPart and rootPart.Parent then
+		rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+	end
+	
+	-- Chuyển HumanoidState về GettingUp để character đứng dậy và di chuyển lại
+	if humanoid and humanoid.Parent then
+		humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+	end
 	
 	if not success then
 		warn("[DashModule] Error during dash: " .. tostring(err))

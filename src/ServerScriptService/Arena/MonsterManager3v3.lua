@@ -105,6 +105,8 @@ local function isNearAnyBase(monsterPosition)
 	return distanceToTeam1Base <= CONFIG.BASE_STOP_RADIUS or distanceToTeam2Base <= CONFIG.BASE_STOP_RADIUS
 end
 
+local moveTo
+
 -- Monster quay ve "cua" cua minh (khu rung) khi ngung duoi
 local function returnToMonsterDoor(monsterData)
 	monsterData.state = "returningToDoor"
@@ -201,7 +203,7 @@ local function attack(monsterData, target)
 	end
 end
 
-local function moveTo(monsterData, pos)
+moveTo = function(monsterData, pos)
 	local h = monsterData.character:FindFirstChildOfClass("Humanoid")
 	local hrp = monsterData.character:FindFirstChild("HumanoidRootPart")
 	if h and hrp then

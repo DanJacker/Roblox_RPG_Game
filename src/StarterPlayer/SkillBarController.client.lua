@@ -49,6 +49,8 @@ local function getCooldownRemaining(skillId)
 	return math.max(0, info.cooldown - (tick() - lastUse))
 end
 
+local updateSkillBar
+
 local function startCooldown(skillId)
 	cooldownTimers[skillId] = tick()
 end
