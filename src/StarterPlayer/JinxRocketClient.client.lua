@@ -1,27 +1,14 @@
--- Jinx Rocket Client - Press C to fire
-local UserInputService = game:GetService("UserInputService")
+-- Jinx Rocket Client - Handles rocket firing (input handled by SkillBarController)
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local COOLDOWN = 15
-local lastFireTime = 0
+local remoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents", 10)
+if not remoteEvents then return end
+local rocketRemote = remoteEvents:FindFirstChild("JinxRocketRemote", 5)
+if not rocketRemote then return end
 
-local remoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
-local rocketRemote = remoteEvents:WaitForChild("JinxRocketRemote", 5)
-
-local function fireRocket()
-    local currentTime = tick()
-    if currentTime - lastFireTime < COOLDOWN then
-        local remaining = math.ceil(COOLDOWN - (currentTime - lastFireTime))
-        return
-    end
+-- Expose fire function for SkillBarController to call
+_G.FireJinxRocket = function()
     rocketRemote:FireServer("Launch")
-    lastFireTime = currentTime
 end
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.C then
-        fireRocket()
-    end
-end)
 

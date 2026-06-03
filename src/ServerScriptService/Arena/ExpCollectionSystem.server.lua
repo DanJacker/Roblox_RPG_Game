@@ -72,6 +72,10 @@ local function collectExp(orb, player)
             PlayerData.Set(player, "Level", newLevel)
             PlayerData.Set(player, "Exp", newExp - expNeeded)
             
+            -- Give gacha roll on level up
+            if _G.GiveGachaRoll then
+                _G.GiveGachaRoll(player)
+            end
         end
         
     end

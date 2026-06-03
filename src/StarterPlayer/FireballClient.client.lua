@@ -1,75 +1,34 @@
--- Fireball Client - Handles input and fires fireball
--- Press Z to shoot a fireball from your hand
+-- Fireball Client - Handles fireball firing (input handled by SkillBarController)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
--- Prefer RemoteEvents folder for organization
-local remoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
-if not remoteEvents then
-    warn("[FireballClient] RemoteEvents folder not found in ReplicatedStorage")
-    return
-end
-local fireballRemote = remoteEvents:WaitForChild("FireballRemote", 5)
-if not fireballRemote then
-    warn("[FireballClient] FireballRemote not found in RemoteEvents")
-    return
-end
-
--- Configuration
-local COOLDOWN = 5 -- seconds
-
--- Track cooldown
-local lastFireTime = -COOLDOWN
+local remoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents", 10)
+if not remoteEvents then return end
+local fireballRemote = remoteEvents:FindFirstChild("FireballRemote", 5)
+if not fireballRemote then return end
 
 -- Function to get hand position
 local function getHandPosition()
     local character = player.Character
     if not character then return nil end
-    
-    -- Try to find right hand
     local rightHand = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
     if rightHand then
         return rightHand.Position + Vector3.new(0, 1, 0)
     end
-    
-    -- Fallback to HumanoidRootPart position
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if hrp then
         return hrp.Position + Vector3.new(0, 1.5, 0)
     end
-    
     return nil
 end
 
--- Function to fire fireball
-local function fireFireball()
-    -- Check cooldown
-    local currentTime = tick()
-    if currentTime - lastFireTime < COOLDOWN then
-        local remaining = math.ceil(COOLDOWN - (currentTime - lastFireTime))
-        return
-    end
-    
-    -- Get hand position
+-- Expose fire function for SkillBarController to call
+_G.FireFireball = function()
     local handPos = getHandPosition()
-    if not handPos then return end
-    
-    -- Fire the remote event
-    fireballRemote:FireServer("Launch", handPos)
-    lastFireTime = currentTime
-    
-end
-
--- Handle key input
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    -- Check for Z key
-    if input.KeyCode == Enum.KeyCode.Z then
-        fireFireball()
+    if handPos then
+        fireballRemote:FireServer("Launch", handPos)
     end
-end)
+end
 
