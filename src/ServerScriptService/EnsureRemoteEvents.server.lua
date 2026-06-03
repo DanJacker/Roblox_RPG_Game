@@ -7,6 +7,7 @@ local required = {
     "BaseHealthUpdate",
     "CombatRemote",
     "FireballRemote",
+    "JinxRocketRemote",
     "JoinQueue",
     "KillEvent",
     "LeaveQueue",

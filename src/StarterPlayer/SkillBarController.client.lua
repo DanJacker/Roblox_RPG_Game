@@ -611,10 +611,8 @@ local function buildGachaGui()
 	closeCorner.CornerRadius = UDim.new(0, 10)
 	closeCorner.Parent = closeBtn
 
-	-- Store references
-	gachaPanel.RollButton = rollBtn
-	gachaPanel.EquipButton = equipBtn
-	gachaPanel.CloseButton = closeBtn
+	-- Store references (use FindFirstChild instead of dot notation on Instances)
+	-- rollBtn, equipBtn, closeBtn are accessed via gachaPanel:FindFirstChild("RollButton") etc.
 
 	-- Roll button click
 	rollBtn.MouseButton1Click:Connect(function()
@@ -1004,7 +1002,10 @@ local function buildInventoryGui()
 	gridLayout.Parent = skillGrid
 
 	local gridPadding = Instance.new("UIPadding")
-	gridPadding.PaddingAll = UDim.new(0, 8)
+	gridPadding.PaddingTop = UDim.new(0, 8)
+	gridPadding.PaddingBottom = UDim.new(0, 8)
+	gridPadding.PaddingLeft = UDim.new(0, 8)
+	gridPadding.PaddingRight = UDim.new(0, 8)
 	gridPadding.Parent = skillGrid
 
 	-- Close button

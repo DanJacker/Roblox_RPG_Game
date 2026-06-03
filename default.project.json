@@ -69,6 +69,21 @@
         },
         "VictoryAnnouncement": {
           "$className": "RemoteEvent"
+        },
+        "GachaRollRemote": {
+          "$className": "RemoteEvent"
+        },
+        "GenericSkillRemote": {
+          "$className": "RemoteEvent"
+        },
+        "LevelUpRemote": {
+          "$className": "RemoteEvent"
+        },
+        "SkillSlotRemote": {
+          "$className": "RemoteEvent"
+        },
+        "SkillSyncRemote": {
+          "$className": "RemoteEvent"
         }
       }
     },
