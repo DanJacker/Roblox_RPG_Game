@@ -22,7 +22,12 @@ local required = {
     "RequestRankUpdate",
     "RespawnEvent",
     "SpawnSelect",
-    "VictoryAnnouncement"
+    "VictoryAnnouncement",
+    "GachaRollRemote",
+    "GenericSkillRemote",
+    "LevelUpRemote",
+    "SkillSlotRemote",
+    "SkillSyncRemote"
 }
 
 local function ensure()
