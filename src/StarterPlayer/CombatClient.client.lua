@@ -27,20 +27,25 @@ local isAttacking = false
 
 -- Lấy CombatRemote và Animation
 local combatRemote = ReplicatedStorage:WaitForChild("CombatRemote")
-local animationsFolder = ReplicatedStorage:WaitForChild("Animations", 10)
+local animationsFolder = ReplicatedStorage:FindFirstChild("Animations")
 
--- Fallback: Tạo Animations folder nếu chưa có
+-- Ensure Animations folder exists and populate/update animations from AnimationIdAsset
 if not animationsFolder then
 	animationsFolder = Instance.new("Folder")
 	animationsFolder.Name = "Animations"
 	animationsFolder.Parent = ReplicatedStorage
-	
-	local ok, AnimationIdAsset = pcall(function()
-		return require(ReplicatedStorage:FindFirstChild("Modules") and ReplicatedStorage.Modules:FindFirstChild("AnimationIdAsset"))
-	end)
-	
-	if ok and AnimationIdAsset then
-		for name, id in pairs(AnimationIdAsset) do
+end
+
+local ok, AnimationIdAsset = pcall(function()
+	return require(ReplicatedStorage:FindFirstChild("Modules") and ReplicatedStorage.Modules:FindFirstChild("AnimationIdAsset"))
+end)
+
+if ok and AnimationIdAsset then
+	for name, id in pairs(AnimationIdAsset) do
+		local existing = animationsFolder:FindFirstChild(name)
+		if existing and existing:IsA("Animation") then
+			existing.AnimationId = id
+		else
 			local anim = Instance.new("Animation")
 			anim.Name = name
 			anim.AnimationId = id
@@ -154,7 +159,12 @@ local function playAttackAnimation()
 		attackTrack = animator:LoadAnimation(basicAttackAnim)
 		attackTrack.Priority = Enum.AnimationPriority.Action
 		attackTrack.Looped = false
+		-- mark attacking and clear when animation stops
+		isAttacking = true
 		attackTrack:Play()
+		attackTrack.Stopped:Connect(function()
+			isAttacking = false
+		end)
 	end)
 	
 	if not success then
@@ -227,7 +237,6 @@ local function dealDamage(target)
 	end)
 	
 	if success then
-		lastAttackTime = tick()
 		return true
 	else
 		warn("[CombatClient] Lỗi gửi damage: " .. tostring(err))
@@ -237,28 +246,34 @@ end
 
 -- Xử lý tấn công khi nhấn M1
 local function onAttack()
+	-- Prevent spamming while animation is playing
+	if isAttacking then return end
+
 	-- Kiểm tra cooldown
 	local timeSinceLastAttack = tick() - lastAttackTime
 	if timeSinceLastAttack < CONFIG.COOLDOWN then
 		return
 	end
-	
-	-- Phát animation
-	playAttackAnimation()
-	
+
+	-- Phát animation (only proceed if it started)
+	local ok = playAttackAnimation()
+	if not ok then return end
+
+	-- set cooldown timestamp now to prevent rapid repeats
+	lastAttackTime = tick()
+
 	-- Tạo VFX attack
 	local character = player.Character
 	if character then
 		createAttackVFX(character)
 	end
-	
+
 	-- Tìm mục tiêu và gây damage
 	local target = findNearestTarget()
 	if target then
 		dealDamage(target)
 		-- Tạo VFX impact khi đánh trúng
 		createImpactVFX(target)
-	else
 	end
 end
 

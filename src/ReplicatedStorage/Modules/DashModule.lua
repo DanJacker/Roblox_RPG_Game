@@ -16,6 +16,13 @@ local Animations = ReplicatedStorage:FindFirstChild("Animations", 10)
 local DashModule = {}
 local isDashing = false
 local lastDashTime = 0
+-- Default: whether dash can phase through world geometry (true = can pass through)
+DashModule.allowPhase = false
+
+function DashModule.SetAllowPhase(enabled)
+	DashModule.allowPhase = not not enabled
+end
+
 
 -- ========== TRAIL EFFECT (cyan speed trail) ==========
 local function CreateDashTrail(rootPart)
@@ -139,7 +146,7 @@ local function RestoreFOV(camera, targetFOV)
 end
 
 -- ========== MAIN DASH (Blox Fruits style) ==========
-function DashModule.Execute(direction: string)
+function DashModule.Execute(direction: string, phase)
 	direction = direction or "Forward"
 
 	-- Cooldown check
@@ -206,12 +213,16 @@ function DashModule.Execute(direction: string)
 	-- ===== FOV BOOST (speed feel) =====
 	local originalFOV = ApplyFOVBoost(camera)
 
-	-- ===== DISABLE COLLISION (prevent fling) =====
-	local originalCollisions = {}
-	for _, part in ipairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			originalCollisions[part] = part.CanCollide
-			part.CanCollide = false
+	-- ===== OPTIONAL: DISABLE COLLISION (prevent fling / allow phasing) =====
+	local canPhase = (phase ~= nil) and phase or DashModule.allowPhase
+	local originalCollisions = nil
+	if canPhase then
+		originalCollisions = {}
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				originalCollisions[part] = part.CanCollide
+				part.CanCollide = false
+			end
 		end
 	end
 
@@ -226,53 +237,41 @@ function DashModule.Execute(direction: string)
 		end
 	end)
 
-	-- ===== CREATE LinearVelocity (modern, smooth) =====
-	-- KEY: We do NOT use PlatformStand or Physics state.
-	-- The humanoid stays controllable the entire time.
-	-- LinearVelocity overrides movement during burst, then
-	-- we smoothly decelerate so the humanoid resumes naturally.
-	local attachment = Instance.new("Attachment")
-	attachment.Name = "DashAttachment"
-	attachment.Parent = rootPart
+	-- ===== APPLY VELOCITY DIRECTLY (client-friendly) =====
+	-- Using AssemblyLinearVelocity is more reliable for client-local
+	-- dash movement than creating Actuators which may not take effect
+	-- depending on network ownership and engine settings.
+	local originalVelocity = rootPart.AssemblyLinearVelocity
 
-	local linearVel = Instance.new("LinearVelocity")
-	linearVel.Name = "DashVelocity"
-	linearVel.Attachment0 = attachment
-	linearVel.VectorVelocity = dashDir * DASH_SPEED
-	linearVel.MaxForce = Vector3.new(math.huge, 0, math.huge)  -- Horizontal only
-	linearVel.RelativeTo = Enum.ActuatorRelativeTo.World
-	linearVel.Parent = rootPart
-
-	-- ===== BURST PHASE (full speed) =====
+	-- Burst phase: set horizontal velocity while preserving Y
+	rootPart.AssemblyLinearVelocity = Vector3.new(dashDir.X * DASH_SPEED, originalVelocity.Y, dashDir.Z * DASH_SPEED)
 	task.wait(DASH_DURATION)
 
-	-- ===== DECELERATION PHASE (smooth ease-out) =====
-	-- Instead of stopping instantly, we smoothly reduce speed
-	-- so the character naturally transitions back to walking
+	-- Deceleration phase: smoothly reduce horizontal speed
 	local decelStart = tick()
 	while true do
 		local elapsed = tick() - decelStart
 		local progress = math.clamp(elapsed / DASH_DECEL, 0, 1)
 
-		-- Quadratic ease-out: fast decel at start, gentle at end
 		local speed = DASH_SPEED * (1 - progress * progress)
 
-		if rootPart and rootPart.Parent and linearVel and linearVel.Parent then
-			linearVel.VectorVelocity = dashDir * speed
+		if rootPart and rootPart.Parent then
+			local currentY = rootPart.AssemblyLinearVelocity.Y
+			rootPart.AssemblyLinearVelocity = Vector3.new(dashDir.X * speed, currentY, dashDir.Z * speed)
 		end
 
 		if progress >= 1 then break end
 		task.wait()
 	end
 
-	-- ===== CLEANUP =====
-	if linearVel and linearVel.Parent then linearVel:Destroy() end
-	if attachment and attachment.Parent then attachment:Destroy() end
+	-- Leave vertical velocity as-is; no actuator cleanup required
 
-	-- Restore collision
-	for part, original in pairs(originalCollisions) do
-		if part and part.Parent then
-			part.CanCollide = original
+	-- Restore collision (only if we disabled them earlier)
+	if originalCollisions then
+		for part, original in pairs(originalCollisions) do
+			if part and part.Parent then
+				part.CanCollide = original
+			end
 		end
 	end
 
