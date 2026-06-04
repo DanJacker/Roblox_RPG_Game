@@ -1,4 +1,4 @@
-﻿-- BossClientHandler - Xử lý thông báo và hiển thị Elite Boss
+-- BossClientHandler - Xử lý thông báo và hiển thị Elite Boss
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")

@@ -1,4 +1,4 @@
-﻿-- Spawn Selection Client - Chọn vị trí spawn khi tìm thấy trận
+-- Spawn Selection Client - Chọn vị trí spawn khi tìm thấy trận
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")

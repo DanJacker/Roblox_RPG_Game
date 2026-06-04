@@ -1,4 +1,4 @@
-﻿-- MVP Display Client - Hiá»ƒn thá»‹ MVP UI khi káº¿t thÃºc tráº­n
+-- MVP Display Client - Hiá»ƒn thá»‹ MVP UI khi káº¿t thÃºc tráº­n
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")

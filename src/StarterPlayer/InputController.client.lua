@@ -1,4 +1,4 @@
-﻿local UserInputService = game:GetService("UserInputService")
+local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DashModule = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("DashModule"))

@@ -1,4 +1,4 @@
-﻿-- Fireball Client - Handles fireball firing (input handled by SkillBarController)
+-- Fireball Client - Handles fireball firing (input handled by SkillBarController)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

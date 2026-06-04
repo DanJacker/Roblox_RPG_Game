@@ -1,4 +1,4 @@
-﻿-- Match End Help Client - Mở GUI hướng dẫn bằng phím H
+-- Match End Help Client - Mở GUI hướng dẫn bằng phím H
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 

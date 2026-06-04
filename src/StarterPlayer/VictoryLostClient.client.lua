@@ -1,4 +1,4 @@
-﻿-- Victory/Lost Client - Hiển thị UI chiến thắng/thua cuộc
+-- Victory/Lost Client - Hiển thị UI chiến thắng/thua cuộc
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")

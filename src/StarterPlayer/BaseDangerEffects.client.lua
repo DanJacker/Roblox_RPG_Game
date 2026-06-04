@@ -1,4 +1,4 @@
-﻿-- Base Danger Effects Client - Hiệu ứng sấm sét và nhuộm đỏ khi base còn 15-25% máu
+-- Base Danger Effects Client - Hiệu ứng sấm sét và nhuộm đỏ khi base còn 15-25% máu
 -- Thiết kế an toàn cho người bị động kinh (seizure-safe)
 
 local Players = game:GetService("Players")

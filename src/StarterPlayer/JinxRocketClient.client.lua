@@ -1,4 +1,4 @@
-﻿-- Jinx Rocket Client - Handles rocket firing (input handled by SkillBarController)
+-- Jinx Rocket Client - Handles rocket firing (input handled by SkillBarController)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 

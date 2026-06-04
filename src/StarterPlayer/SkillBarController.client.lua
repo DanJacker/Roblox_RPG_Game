@@ -1,4 +1,4 @@
-﻿-- SkillBarController - Main client controller for skill bar, gacha, and inventory
+-- SkillBarController - Main client controller for skill bar, gacha, and inventory
 -- Handles Z/X/C/V input, cooldown display, gacha rolls, and skill slot assignment
 
 local Players = game:GetService("Players")

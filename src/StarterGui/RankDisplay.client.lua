@@ -1,4 +1,4 @@
-﻿-- RankDisplay - Hiển thị rank của player
+-- RankDisplay - Hiển thị rank của player
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")

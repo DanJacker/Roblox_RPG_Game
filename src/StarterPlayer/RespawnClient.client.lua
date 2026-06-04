@@ -1,4 +1,4 @@
-﻿-- Respawn Client - Hiển thị bộ đếm thời gian hồi sinh
+-- Respawn Client - Hiển thị bộ đếm thời gian hồi sinh
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")

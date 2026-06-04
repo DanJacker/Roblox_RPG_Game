@@ -1,4 +1,4 @@
-﻿-- Sword Menu Client - Xử lý menu chọn chế độ chơi + Spawn nhà khi vào trận
+-- Sword Menu Client - Xử lý menu chọn chế độ chơi + Spawn nhà khi vào trận
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
