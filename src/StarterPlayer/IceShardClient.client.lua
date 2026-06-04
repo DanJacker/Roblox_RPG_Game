@@ -1,4 +1,4 @@
-﻿-- Fireball Client - Handles fireball firing (input handled by SkillBarController)
+-- IceShard Client - Handles ice shard firing (input handled by SkillBarController)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -6,8 +6,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local remoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents", 10)
 if not remoteEvents then return end
-local fireballRemote = remoteEvents:FindFirstChild("FireballRemote", 5)
-if not fireballRemote then return end
+local iceShardRemote = remoteEvents:FindFirstChild("IceShardRemote", 5)
+if not iceShardRemote then return end
 
 -- Function to get hand position
 local function getHandPosition()
@@ -25,10 +25,9 @@ local function getHandPosition()
 end
 
 -- Expose fire function for SkillBarController to call
-_G.FireFireball = function()
+_G.FireIceShard = function()
     local handPos = getHandPosition()
     if handPos then
-        fireballRemote:FireServer("Launch", handPos)
+        iceShardRemote:FireServer("Launch", handPos)
     end
 end
-

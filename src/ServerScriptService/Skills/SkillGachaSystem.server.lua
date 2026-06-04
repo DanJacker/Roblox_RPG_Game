@@ -34,14 +34,21 @@ local function getSkillData(player)
 end
 
 -- ========== SYNC TO CLIENT ==========
+local cachedSyncRemote = nil -- Cached after handlers connect
+
 local function syncToClient(player)
 	local data = getSkillData(player)
 	if not data then return end
 
-	local remotes = getRemoteEvents()
-	if not remotes then return end
+	-- Use cached remote or fall back to finding it
+	local syncRemote = cachedSyncRemote
+	if not syncRemote then
+		local remotes = getRemoteEvents()
+		if remotes then
+			syncRemote = remotes:FindFirstChild("SkillSyncRemote")
+		end
+	end
 
-	local syncRemote = remotes:FindFirstChild("SkillSyncRemote")
 	if syncRemote then
 		syncRemote:FireClient(player, {
 			inventory = data.inventory,
@@ -88,6 +95,14 @@ local function performGachaRoll(player)
 
 	if not isDuplicate then
 		table.insert(data.inventory, chosenSkill)
+
+		-- Auto-equip: assign new skill to first empty slot
+		for _, slotKey in ipairs(SkillConfig.SlotKeys) do
+			if not data.slots[slotKey] then
+				data.slots[slotKey] = chosenSkill
+				break
+			end
+		end
 	else
 		-- Give gold for duplicate
 		local goldAmount = SkillConfig.DuplicateGold[rarity] or 20
@@ -415,37 +430,57 @@ for _, player in Players:GetPlayers() do
 end
 
 -- ========== REMOTE EVENT HANDLERS ==========
-local remotes = getRemoteEvents()
-if remotes then
-	local gachaRemote = remotes:FindFirstChild("GachaRollRemote")
+-- Wait for RemoteEvents folder and remotes to exist (EnsureRemoteEvents may load after this script)
+task.spawn(function()
+	local remotes = ReplicatedStorage:WaitForChild("RemoteEvents", 30)
+	if not remotes then
+		warn("[SkillGachaSystem] RemoteEvents folder not found after 30s - gacha will not work!")
+		return
+	end
+
+	local gachaRemote = remotes:WaitForChild("GachaRollRemote", 10)
 	if gachaRemote then
 		gachaRemote.OnServerEvent:Connect(function(player, action)
 			if action == "Roll" then
 				local skillId, isDuplicate = performGachaRoll(player)
 				if skillId then
 					gachaRemote:FireClient(player, {skillId = skillId, isDuplicate = isDuplicate})
+				else
+					-- Always respond so client isn't stuck
+					gachaRemote:FireClient(player, {skillId = nil, failed = true})
 				end
 			end
 		end)
+		print("[SkillGachaSystem] GachaRollRemote handler connected")
+	else
+		warn("[SkillGachaSystem] GachaRollRemote not found!")
 	end
 
-	local slotRemote = remotes:FindFirstChild("SkillSlotRemote")
+	local slotRemote = remotes:WaitForChild("SkillSlotRemote", 10)
 	if slotRemote then
 		slotRemote.OnServerEvent:Connect(function(player, data)
 			if data and data.action == "Assign" then
 				onSlotAssign(player, data.slot, data.skillId)
 			end
 		end)
+		print("[SkillGachaSystem] SkillSlotRemote handler connected")
 	end
 
-	local genericRemote = remotes:FindFirstChild("GenericSkillRemote")
+	local genericRemote = remotes:WaitForChild("GenericSkillRemote", 10)
 	if genericRemote then
 		genericRemote.OnServerEvent:Connect(function(player, data)
 			if data and data.skillId then
 				onGenericSkill(player, data.skillId, data.position)
 			end
 		end)
+		print("[SkillGachaSystem] GenericSkillRemote handler connected")
 	end
-end
+
+	-- Cache the sync remote for efficient use in syncToClient
+	cachedSyncRemote = remotes:FindFirstChild("SkillSyncRemote")
+	if cachedSyncRemote then
+		print("[SkillGachaSystem] SkillSyncRemote cached")
+	end
+end)
 
 print("[SkillGachaSystem] Loaded successfully")

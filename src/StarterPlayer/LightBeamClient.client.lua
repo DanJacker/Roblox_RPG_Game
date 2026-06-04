@@ -1,4 +1,4 @@
--- Light Beam Client - Handles light beam firing (input handled by SkillBarController)
+﻿-- Light Beam Client - Handles light beam firing (input handled by SkillBarController)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

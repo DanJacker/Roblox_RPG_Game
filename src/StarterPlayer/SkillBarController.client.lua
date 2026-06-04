@@ -1,4 +1,4 @@
--- SkillBarController - Main client controller for skill bar, gacha, and inventory
+﻿-- SkillBarController - Main client controller for skill bar, gacha, and inventory
 -- Handles Z/X/C/V input, cooldown display, gacha rolls, and skill slot assignment
 
 local Players = game:GetService("Players")
@@ -25,6 +25,8 @@ local screenGui
 local skillBarFrame
 local slotFrames = {} -- ["Z"] = frame, etc.
 local cooldownOverlays = {} -- ["Z"] = imageLabel
+local cooldownSweeps = {} -- ["Z"] = UIGradient for circular sweep
+local cooldownFlashFrames = {} -- ["Z"] = flash frame for ready effect
 local keyLabels = {} -- ["Z"] = textLabel
 local gachaOverlay
 local gachaPanel
@@ -51,6 +53,7 @@ local function getCooldownRemaining(skillId)
 	return math.max(0, info.cooldown - (tick() - lastUse))
 end
 
+local recentlyReady = {} -- [key] = true when cooldown just finished (for flash)
 local updateSkillBar
 
 local function startCooldown(skillId)
@@ -75,6 +78,10 @@ local function fireSkill(skillId)
 	if skillId == "Fireball" then
 		if _G.FireFireball then
 			_G.FireFireball()
+		end
+	elseif skillId == "IceShard" then
+		if _G.FireIceShard then
+			_G.FireIceShard()
 		end
 	elseif skillId == "LightBeam" then
 		if _G.FireLightBeam then
@@ -107,40 +114,68 @@ local function buildSkillBar()
 	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	screenGui.Parent = player:WaitForChild("PlayerGui")
 
-	-- Main bar frame (bottom center)
+	-- Main bar frame (compact, LoL style)
 	skillBarFrame = Instance.new("Frame")
 	skillBarFrame.Name = "SkillBar"
-	skillBarFrame.Size = UDim2.new(0, 320, 0, 80)
-	skillBarFrame.Position = UDim2.new(0.5, -160, 1, -100)
-	skillBarFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-	skillBarFrame.BackgroundTransparency = 0.3
+	skillBarFrame.Size = UDim2.new(0, 320, 0, 52)
+	skillBarFrame.Position = UDim2.new(0.5, -160, 1, -59)
+	skillBarFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+	skillBarFrame.BackgroundTransparency = 0.2
 	skillBarFrame.BorderSizePixel = 0
 	skillBarFrame.Parent = screenGui
 
 	local barCorner = Instance.new("UICorner")
-	barCorner.CornerRadius = UDim.new(0, 12)
+	barCorner.CornerRadius = UDim.new(0, 8)
 	barCorner.Parent = skillBarFrame
 
 	local barStroke = Instance.new("UIStroke")
-	barStroke.Color = Color3.fromRGB(80, 80, 120)
-	barStroke.Thickness = 1.5
+	barStroke.Color = Color3.fromRGB(60, 60, 90)
+	barStroke.Thickness = 1
 	barStroke.Parent = skillBarFrame
 
-	-- Inventory button (right side of bar)
+	-- Level badge (LoL style, left side)
+	local levelBadge = Instance.new("Frame")
+	levelBadge.Name = "LevelBadge"
+	levelBadge.Size = UDim2.new(0, 36, 0, 36)
+	levelBadge.Position = UDim2.new(0, 6, 0.5, -18)
+	levelBadge.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+	levelBadge.BorderSizePixel = 0
+	levelBadge.Parent = skillBarFrame
+
+	local badgeCorner = Instance.new("UICorner")
+	badgeCorner.CornerRadius = UDim.new(0, 18)
+	badgeCorner.Parent = levelBadge
+
+	local badgeStroke = Instance.new("UIStroke")
+	badgeStroke.Color = Color3.fromRGB(80, 130, 255)
+	badgeStroke.Thickness = 1.5
+	badgeStroke.Parent = levelBadge
+
+	local levelText = Instance.new("TextLabel")
+	levelText.Name = "LevelText"
+	levelText.Size = UDim2.new(1, 0, 1, 0)
+	levelText.BackgroundTransparency = 1
+	levelText.TextColor3 = Color3.fromRGB(255, 255, 255)
+	levelText.Text = "1"
+	levelText.Font = Enum.Font.GothamBold
+	levelText.TextSize = 16
+	levelText.Parent = levelBadge
+
+	-- Inventory button (right side, compact)
 	local invBtn = Instance.new("TextButton")
 	invBtn.Name = "InventoryBtn"
-	invBtn.Size = UDim2.new(0, 36, 0, 36)
-	invBtn.Position = UDim2.new(1, -44, 0.5, -18)
-	invBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-	invBtn.TextColor3 = Color3.fromRGB(200, 200, 255)
+	invBtn.Size = UDim2.new(0, 26, 0, 26)
+	invBtn.Position = UDim2.new(1, -32, 0.5, -13)
+	invBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+	invBtn.TextColor3 = Color3.fromRGB(160, 160, 200)
 	invBtn.Text = "B"
 	invBtn.Font = Enum.Font.GothamBold
-	invBtn.TextSize = 16
+	invBtn.TextSize = 11
 	invBtn.BorderSizePixel = 0
 	invBtn.Parent = skillBarFrame
 
 	local invBtnCorner = Instance.new("UICorner")
-	invBtnCorner.CornerRadius = UDim.new(0, 8)
+	invBtnCorner.CornerRadius = UDim.new(0, 6)
 	invBtnCorner.Parent = invBtn
 
 	invBtn.MouseButton1Click:Connect(function()
@@ -151,11 +186,14 @@ local function buildSkillBar()
 		end
 	end)
 
-	-- Build 4 skill slots
-	local slotSize = 64
-	local slotGap = 8
+	-- Build 4 skill slots (compact)
+	local slotSize = 44
+	local slotGap = 4
 	local totalWidth = slotSize * 4 + slotGap * 3
-	local startX = (320 - totalWidth) / 2
+	local levelBadgeSpace = 48
+	local invBtnSpace = 38
+	local availableWidth = 320 - levelBadgeSpace - invBtnSpace
+	local startX = levelBadgeSpace + (availableWidth - totalWidth) / 2
 
 	for i, key in ipairs(SkillConfig.SlotKeys) do
 		local x = startX + (i - 1) * (slotSize + slotGap)
@@ -164,79 +202,112 @@ local function buildSkillBar()
 		slotFrame.Name = "Slot_" .. key
 		slotFrame.Size = UDim2.new(0, slotSize, 0, slotSize)
 		slotFrame.Position = UDim2.new(0, x, 0.5, -slotSize / 2)
-		slotFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+		slotFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 		slotFrame.BorderSizePixel = 0
 		slotFrame.Parent = skillBarFrame
 
 		local slotCorner = Instance.new("UICorner")
-		slotCorner.CornerRadius = UDim.new(0, 10)
+		slotCorner.CornerRadius = UDim.new(0, 6)
 		slotCorner.Parent = slotFrame
 
 		local slotStroke = Instance.new("UIStroke")
 		slotStroke.Name = "SlotStroke"
-		slotStroke.Color = Color3.fromRGB(80, 80, 120)
+		slotStroke.Color = Color3.fromRGB(60, 60, 90)
 		slotStroke.Thickness = 1
 		slotStroke.Parent = slotFrame
 
 		-- Skill icon (colored square placeholder)
 		local icon = Instance.new("Frame")
 		icon.Name = "SkillIcon"
-		icon.Size = UDim2.new(1, -8, 1, -8)
-		icon.Position = UDim2.new(0, 4, 0, 4)
-		icon.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+		icon.Size = UDim2.new(1, -6, 1, -6)
+		icon.Position = UDim2.new(0, 3, 0, 3)
+		icon.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 		icon.BorderSizePixel = 0
 		icon.Visible = false
 		icon.Parent = slotFrame
 
 		local iconCorner = Instance.new("UICorner")
-		iconCorner.CornerRadius = UDim.new(0, 8)
+		iconCorner.CornerRadius = UDim.new(0, 4)
 		iconCorner.Parent = icon
 
 		-- Skill name label
 		local nameLabel = Instance.new("TextLabel")
 		nameLabel.Name = "SkillName"
-		nameLabel.Size = UDim2.new(1, -4, 0, 16)
-		nameLabel.Position = UDim2.new(0, 2, 1, -18)
+		nameLabel.Size = UDim2.new(1, -2, 0, 10)
+		nameLabel.Position = UDim2.new(0, 1, 1, -11)
 		nameLabel.BackgroundTransparency = 1
-		nameLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
+		nameLabel.TextColor3 = Color3.fromRGB(200, 200, 240)
 		nameLabel.Text = ""
 		nameLabel.Font = Enum.Font.GothamBold
-		nameLabel.TextSize = 9
+		nameLabel.TextSize = 7
 		nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 		nameLabel.Parent = slotFrame
 
 		-- Key label (Z/X/C/V)
 		local keyLabel = Instance.new("TextLabel")
 		keyLabel.Name = "KeyLabel"
-		keyLabel.Size = UDim2.new(0, 20, 0, 16)
-		keyLabel.Position = UDim2.new(0, 2, 0, 2)
+		keyLabel.Size = UDim2.new(0, 14, 0, 10)
+		keyLabel.Position = UDim2.new(0, 1, 0, 1)
 		keyLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		keyLabel.BackgroundTransparency = 0.4
 		keyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		keyLabel.Text = key
 		keyLabel.Font = Enum.Font.GothamBold
-		keyLabel.TextSize = 11
+		keyLabel.TextSize = 8
 		keyLabel.BorderSizePixel = 0
 		keyLabel.Parent = slotFrame
 
 		local keyCorner = Instance.new("UICorner")
-		keyCorner.CornerRadius = UDim.new(0, 4)
+		keyCorner.CornerRadius = UDim.new(0, 2)
 		keyCorner.Parent = keyLabel
 
-		-- Cooldown overlay
+		-- Cooldown overlay (dark background)
 		local cooldownOverlay = Instance.new("Frame")
 		cooldownOverlay.Name = "CooldownOverlay"
 		cooldownOverlay.Size = UDim2.new(1, 0, 1, 0)
 		cooldownOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		cooldownOverlay.BackgroundTransparency = 0.6
+		cooldownOverlay.BackgroundTransparency = 0.55
 		cooldownOverlay.BorderSizePixel = 0
 		cooldownOverlay.Visible = false
 		cooldownOverlay.ZIndex = 5
 		cooldownOverlay.Parent = slotFrame
 
 		local cdCorner = Instance.new("UICorner")
-		cdCorner.CornerRadius = UDim.new(0, 10)
+		cdCorner.CornerRadius = UDim.new(0, 6)
 		cdCorner.Parent = cooldownOverlay
+
+		-- Circular cooldown sweep using UIGradient on an ImageLabel
+		local sweepImage = Instance.new("ImageLabel")
+		sweepImage.Name = "CooldownSweep"
+		sweepImage.Size = UDim2.new(1, 0, 1, 0)
+		sweepImage.BackgroundTransparency = 1
+		sweepImage.Image = "rbxassetid://2619888307"
+		sweepImage.ImageColor3 = Color3.fromRGB(0, 0, 0)
+		sweepImage.ImageTransparency = 0.3
+		sweepImage.Visible = false
+		sweepImage.ZIndex = 6
+		sweepImage.Parent = slotFrame
+
+		local sweepCorner = Instance.new("UICorner")
+		sweepCorner.CornerRadius = UDim.new(0, 6)
+		sweepCorner.Parent = sweepImage
+
+		local sweepGradient = Instance.new("UIGradient")
+		sweepGradient.Name = "SweepGradient"
+		sweepGradient.Rotation = 0
+		sweepGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+			ColorSequenceKeypoint.new(0.4999, Color3.fromRGB(0, 0, 0)),
+			ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1)),
+		})
+		sweepGradient.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.3),
+			NumberSequenceKeypoint.new(0.4999, 0.3),
+			NumberSequenceKeypoint.new(0.5, 1),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		sweepGradient.Parent = sweepImage
 
 		local cdText = Instance.new("TextLabel")
 		cdText.Name = "CooldownText"
@@ -245,19 +316,33 @@ local function buildSkillBar()
 		cdText.TextColor3 = Color3.fromRGB(255, 255, 255)
 		cdText.Text = ""
 		cdText.Font = Enum.Font.GothamBold
-		cdText.TextSize = 18
-		cdText.ZIndex = 6
-		cdText.Parent = cooldownOverlay
+		cdText.TextSize = 14
+		cdText.ZIndex = 7
+		cdText.Parent = slotFrame
+
+		-- Ready flash overlay (brief white flash when cooldown ends)
+		local flashFrame = Instance.new("Frame")
+		flashFrame.Name = "ReadyFlash"
+		flashFrame.Size = UDim2.new(1, 0, 1, 0)
+		flashFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		flashFrame.BackgroundTransparency = 1
+		flashFrame.BorderSizePixel = 0
+		flashFrame.ZIndex = 8
+		flashFrame.Parent = slotFrame
+
+		local flashCorner = Instance.new("UICorner")
+		flashCorner.CornerRadius = UDim.new(0, 6)
+		flashCorner.Parent = flashFrame
 
 		-- Empty slot indicator
 		local emptyLabel = Instance.new("TextLabel")
 		emptyLabel.Name = "EmptyLabel"
 		emptyLabel.Size = UDim2.new(1, 0, 1, 0)
 		emptyLabel.BackgroundTransparency = 1
-		emptyLabel.TextColor3 = Color3.fromRGB(120, 120, 160)
+		emptyLabel.TextColor3 = Color3.fromRGB(80, 80, 110)
 		emptyLabel.Text = "+"
 		emptyLabel.Font = Enum.Font.GothamBold
-		emptyLabel.TextSize = 28
+		emptyLabel.TextSize = 18
 		emptyLabel.Visible = true
 		emptyLabel.Parent = slotFrame
 
@@ -292,7 +377,10 @@ local function buildSkillBar()
 
 		slotFrames[key] = slotFrame
 		cooldownOverlays[key] = cooldownOverlay
+		cooldownSweeps[key] = sweepImage
+		cooldownFlashFrames[key] = flashFrame
 		keyLabels[key] = keyLabel
+		recentlyReady[key] = false
 	end
 end
 
@@ -324,7 +412,7 @@ local function updateSkillBar()
 			skillName.Text = ""
 			emptyLabel.Visible = true
 			if slotStroke then
-				slotStroke.Color = Color3.fromRGB(80, 80, 120)
+				slotStroke.Color = Color3.fromRGB(60, 60, 90)
 			end
 		end
 	end
@@ -335,31 +423,116 @@ local function updateCooldowns()
 	for _, key in ipairs(SkillConfig.SlotKeys) do
 		local skillId = skillSlots[key]
 		local overlay = cooldownOverlays[key]
+		local sweep = cooldownSweeps[key]
+		local flashFrame = cooldownFlashFrames[key]
+		local keyLabel = keyLabels[key]
+		local slotFrame = slotFrames[key]
 		if not overlay then continue end
 
 		if skillId and isOnCooldown(skillId) then
+			recentlyReady[key] = true -- Mark that we were on cooldown (for flash when done)
+
 			overlay.Visible = true
+			if sweep then sweep.Visible = true end
+
 			local remaining = getCooldownRemaining(skillId)
 			local info = getSkillInfo(skillId)
-			local cdText = overlay:FindFirstChild("CooldownText")
+			local cdText = slotFrame and slotFrame:FindFirstChild("CooldownText")
 			if cdText then
-				cdText.Text = string.format("%.1f", remaining)
+				cdText.Visible = true
+				if remaining >= 10 then
+					cdText.Text = string.format("%.0f", remaining)
+				else
+					cdText.Text = string.format("%.1f", remaining)
+				end
 			end
-			-- Fill from bottom based on cooldown progress
-			local info2 = getSkillInfo(skillId)
-			if info2 then
-				local progress = remaining / info2.cooldown
-				overlay.Size = UDim2.new(1, 0, progress, 0)
-				overlay.Position = UDim2.new(0, 0, 1 - progress, 0)
+
+			-- Circular sweep: rotation goes from 0 (full cooldown) to 360 (ready)
+			if info and sweep then
+				local progress = remaining / info.cooldown -- 1 = just started, 0 = ready
+				local rotation = (1 - progress) * 360
+				local gradient = sweep:FindFirstChild("SweepGradient")
+				if gradient then
+					gradient.Rotation = rotation
+				end
+			end
+
+			-- Dim key label when on cooldown
+			if keyLabel then
+				keyLabel.TextColor3 = Color3.fromRGB(150, 80, 80)
+			end
+
+			-- Dim slot border when on cooldown
+			if slotFrame then
+				local stroke = slotFrame:FindFirstChild("SlotStroke")
+				if stroke then
+					stroke.Color = Color3.fromRGB(50, 50, 70)
+				end
 			end
 		else
 			overlay.Visible = false
+			if sweep then sweep.Visible = false end
+
+			local cdText = slotFrame and slotFrame:FindFirstChild("CooldownText")
+			if cdText then
+				cdText.Visible = false
+			end
+
+			-- Restore key label color
+			if keyLabel then
+				keyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			end
+
+			-- Restore slot border color
+			if slotFrame and skillId then
+				local info = getSkillInfo(skillId)
+				local stroke = slotFrame:FindFirstChild("SlotStroke")
+				if stroke and info then
+					stroke.Color = SkillConfig.RarityColors[info.rarity] or Color3.fromRGB(80, 80, 120)
+				end
+			end
+
+			-- Flash effect when cooldown just finished
+			if recentlyReady[key] and flashFrame then
+				recentlyReady[key] = false
+				task.spawn(function()
+					if not flashFrame or not flashFrame.Parent then return end
+					-- Flash in
+					TweenService:Create(flashFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						BackgroundTransparency = 0.3,
+					}):Play()
+					task.wait(0.15)
+					-- Flash out
+					if flashFrame and flashFrame.Parent then
+						TweenService:Create(flashFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							BackgroundTransparency = 1,
+						}):Play()
+					end
+				end)
+			end
 		end
 	end
 end
 
 RunService.Heartbeat:Connect(function()
 	updateCooldowns()
+
+	-- Update level badge
+	if skillBarFrame then
+		local badge = skillBarFrame:FindFirstChild("LevelBadge")
+		if badge then
+			local lt = badge:FindFirstChild("LevelText")
+			if lt then
+				local leaderstats = player:FindFirstChild("leaderstats")
+				if leaderstats then
+					local levelStat = leaderstats:FindFirstChild("Level")
+					if levelStat then
+						lt.Text = tostring(levelStat.Value)
+					end
+				end
+			end
+		end
+	end
 end)
 
 -- ========== BUILD GACHA GUI ==========
@@ -706,19 +879,82 @@ end
 
 -- ========== HANDLE GACHA RESULT FROM SERVER ==========
 local function onGachaResult(data)
-	if not data or not data.skillId then return end
+	if not data then return end
+
+	-- Handle failed roll (no pending rolls, etc.)
+	if data.failed then
+		-- Reset card back and show close button
+		local cardArea = gachaPanel and gachaPanel:FindFirstChild("CardArea")
+		if cardArea then
+			local cardBack = cardArea:FindFirstChild("CardBack")
+			local cardFront = cardArea:FindFirstChild("CardFront")
+			if cardBack then cardBack.Visible = true end
+			if cardFront then cardFront.Visible = false end
+		end
+
+		local rollBtn = gachaPanel and gachaPanel:FindFirstChild("RollButton")
+		local closeBtn = gachaPanel and gachaPanel:FindFirstChild("CloseButton")
+		if rollBtn then
+			rollBtn.Visible = pendingGachaRolls > 0
+			rollBtn.Text = pendingGachaRolls > 0 and ("ROLL! (" .. pendingGachaRolls .. ")") or "Het luot!"
+		end
+		if closeBtn then closeBtn.Visible = true end
+		return
+	end
+
+	if not data.skillId then return end
 
 	local skillId = data.skillId
 	local isDuplicate = data.isDuplicate
 	local info = getSkillInfo(skillId)
 	if not info then return end
 
-	-- Update local inventory
-	if not isDuplicate and not table.find(skillInventory, skillId) then
-		table.insert(skillInventory, skillId)
+	-- Update local inventory (sync may have already added it)
+	if not isDuplicate then
+		if not table.find(skillInventory, skillId) then
+			table.insert(skillInventory, skillId)
+		end
+
+		-- Auto-equip: assign new skill to first empty slot
+		-- Check if skill is already in a slot (from server sync)
+		local alreadyInSlot = false
+		for _, key in ipairs(SkillConfig.SlotKeys) do
+			if skillSlots[key] == skillId then
+				alreadyInSlot = true
+				break
+			end
+		end
+
+		if not alreadyInSlot then
+			local assigned = false
+			for _, key in ipairs(SkillConfig.SlotKeys) do
+				if not skillSlots[key] then
+					skillSlots[key] = skillId
+					assigned = true
+
+					-- Notify server of slot assignment
+					local remotes = ReplicatedStorage:FindFirstChild("RemoteEvents")
+					if remotes then
+						local slotRemote = remotes:FindFirstChild("SkillSlotRemote")
+						if slotRemote then
+							slotRemote:FireServer({action = "Assign", slot = key, skillId = skillId})
+						end
+					end
+
+					break
+				end
+			end
+
+			if not assigned then
+				-- All slots full - player can manually swap via inventory
+				print("[Gacha] All skill slots full! Open inventory (B) to assign " .. skillId)
+			end
+		end
 	end
 
-	pendingGachaRolls = math.max(0, pendingGachaRolls - 1)
+	-- NOTE: Don't decrement pendingGachaRolls here - the SkillSyncRemote already
+	-- set it to the correct value (server decrements before syncing).
+	-- Just update the display.
 
 	-- Update rolls label
 	local rollsLabel = gachaPanel and gachaPanel:FindFirstChild("RollsLabel")
@@ -1224,6 +1460,15 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			closeInventory()
 			return
 		end
+	end
+
+	-- Ctrl+G: Dev gacha rolls (for testing)
+	if input.KeyCode == Enum.KeyCode.G and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+		local devGachaRemote = ReplicatedStorage:FindFirstChild("RemoteEvents") and ReplicatedStorage.RemoteEvents:FindFirstChild("DevGachaRemote")
+		if devGachaRemote then
+			devGachaRemote:FireServer("GiveRolls")
+		end
+		return
 	end
 end)
 

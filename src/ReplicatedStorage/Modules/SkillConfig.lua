@@ -25,6 +25,8 @@ SkillConfig.RarityLabels = {
 	Epic = "Epic",
 	Legendary = "Legendary",
 }
+SkillConfig.RarityOrder = {"Common", "Rare", "Epic", "Legendary"}
+
 SkillConfig.DuplicateGold = {
 	Common = 10,
 	Rare = 25,

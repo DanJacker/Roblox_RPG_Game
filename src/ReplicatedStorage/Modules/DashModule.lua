@@ -1,294 +1,302 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
-local DASH_SPEED = 80
-local DASH_DURATION = 0.3
-local COOLDOWN = 0.5
+-- ========== CONFIG (Blox Fruits style smooth dash) ==========
+local DASH_SPEED = 130        -- Dash speed (studs/sec)
+local DASH_DURATION = 0.15     -- Burst phase duration (very short burst)
+local DASH_DECEL = 0.12       -- Smooth deceleration time after burst
+local COOLDOWN = 1.5          -- Cooldown between dashes
+local INVINCIBLE_TIME = 0.3   -- Brief invincibility during dash
+local FOV_BOOST = 6            -- FOV increase during dash for speed feel
 
--- ========== CONFIG CHO AN TOÀN DASH ==========
-local DISABLE_COLLISIONS = true -- Tắt collision khi dash để không bị văng
-local USE_FORCEFIELD = true -- Thêm ForceField để bảo vệ khỏi fling
-local Animations = ReplicatedStorage:WaitForChild("Animations", 10)
 local Effects = ReplicatedStorage:FindFirstChild("Effects")
-
--- Fallback: Tự tạo Animations nếu chưa có
-if not Animations then
-	Animations = Instance.new("Folder")
-	Animations.Name = "Animations"
-	Animations.Parent = ReplicatedStorage
-
-	local ok, AnimationIdAsset = pcall(function()
-		return require(ReplicatedStorage.Modules.AnimationIdAsset)
-	end)
-
-	if ok and AnimationIdAsset then
-		for name, id in pairs(AnimationIdAsset) do
-			local anim = Instance.new("Animation")
-			anim.Name = name
-			anim.AnimationId = id
-			anim.Parent = Animations
-		end
-		-- Thêm Back animation (fallback từ Front)
-		if not AnimationIdAsset.Back then
-			local backAnim = Instance.new("Animation")
-			backAnim.Name = "Back"
-			backAnim.AnimationId = AnimationIdAsset.Front or ""
-			backAnim.Parent = Animations
-		end
-	end
-end
+local Animations = ReplicatedStorage:FindFirstChild("Animations", 10)
 
 local DashModule = {}
 local isDashing = false
+local lastDashTime = 0
 
--- Tạo VFX cho dash
-local function CreateDashVFX(character, direction)
-	local rootPart = character:FindFirstChild("HumanoidRootPart")
-	if not rootPart then return nil end
-	
-	-- Tìm template VFX
+-- ========== TRAIL EFFECT (cyan speed trail) ==========
+local function CreateDashTrail(rootPart)
+	local att0 = Instance.new("Attachment")
+	att0.Name = "TrailAtt0"
+	att0.Position = Vector3.new(0, 1, -1.5)
+	att0.Parent = rootPart
+
+	local att1 = Instance.new("Attachment")
+	att1.Name = "TrailAtt1"
+	att1.Position = Vector3.new(0, 1, 1.5)
+	att1.Parent = rootPart
+
+	local trail = Instance.new("Trail")
+	trail.Name = "DashTrail"
+	trail.Attachment0 = att0
+	trail.Attachment1 = att1
+	trail.Lifetime = 0.35
+	trail.MinLength = 0.1
+	trail.FaceCamera = true
+	trail.LightEmission = 1
+	trail.LightInfluence = 0
+	trail.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(0.5, 0.5),
+		NumberSequenceKeypoint.new(1, 1)
+	})
+	trail.Color = ColorSequence.new(
+		Color3.fromRGB(0, 180, 255),
+		Color3.fromRGB(0, 255, 200)
+	)
+	trail.WidthScale = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1.2),
+		NumberSequenceKeypoint.new(0.6, 0.6),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	trail.Parent = rootPart
+
+	return trail, att0, att1
+end
+
+local function CleanupDashTrail(trail, att0, att1)
+	if trail then trail.Enabled = false end
+	task.delay(0.5, function()
+		if trail and trail.Parent then trail:Destroy() end
+		if att0 and att0.Parent then att0:Destroy() end
+		if att1 and att1.Parent then att1:Destroy() end
+	end)
+end
+
+-- ========== PARTICLE VFX ==========
+local function CreateDashVFX(rootPart)
 	local vfxTemplate = Effects and Effects:FindFirstChild("DashVFX")
-	if not vfxTemplate then
-		warn("[DashModule] DashVFX template not found!")
-		return nil
-	end
-	
-	-- Clone VFX và gắn vào HumanoidRootPart
+	if not vfxTemplate then return nil end
+
 	local vfx = vfxTemplate:Clone()
 	vfx.Name = "DashEffect"
 	vfx.Parent = rootPart
 	vfx.Anchored = true
 	vfx.CanCollide = false
 	vfx.Massless = true
-	
-	-- Đặt VFX ngay tại vị trí thân nhân vật (HumanoidRootPart)
-	-- Xoay 90 độ sang trái để particle bắn ngang
 	vfx.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(-90), 0)
-	
-	-- Kích hoạt tất cả ParticleEmitter
+
 	for _, child in pairs(vfx:GetChildren()) do
 		if child:IsA("ParticleEmitter") then
 			child.Enabled = true
-			child:Emit(50) -- Phát 50 particle ngay lập tức
+			child:Emit(50)
 		end
 	end
-	
+
 	return vfx
 end
 
--- Xóa VFX sau khi dash xong
 local function CleanupDashVFX(vfx)
-	if vfx then
-		-- Tắt tất cả ParticleEmitter
-		for _, child in pairs(vfx:GetChildren()) do
-			if child:IsA("ParticleEmitter") then
-				child.Enabled = false
-			end
+	if not vfx then return end
+	for _, child in pairs(vfx:GetChildren()) do
+		if child:IsA("ParticleEmitter") then
+			child.Enabled = false
 		end
-		-- Xóa sau một chút để particle hiện ra hết
-		task.delay(0.1, function()
-			if vfx then
-				vfx:Destroy()
-			end
-		end)
 	end
+	task.delay(0.15, function()
+		if vfx and vfx.Parent then vfx:Destroy() end
+	end)
 end
 
-local function PlayAnimation(character: Model, direction: string)
+-- ========== ANIMATION ==========
+local function PlayDashAnimation(character)
 	local humanoid = character:FindFirstChild("Humanoid")
-	if not humanoid then 
-		warn("[DashModule] No Humanoid found")
-		return false
-	end
-	
-	-- Get or create Animator
+	if not humanoid then return end
+
 	local animator = humanoid:FindFirstChild("Animator")
 	if not animator then
 		animator = Instance.new("Animator")
 		animator.Parent = humanoid
 	end
-	
-	-- Find the animation
-	local animation = Animations:FindFirstChild(direction)
-	if not animation then
-		-- Fallback: Nếu không tìm thấy animation (ví dụ 'Back'), dùng 'Front'
-		animation = Animations:FindFirstChild("Front")
-		if not animation then
-			warn("[DashModule] Animation not found: " .. direction .. " (and Front fallback)")
-			return false
+
+	if not Animations then return end
+
+	local animation = Animations:FindFirstChild("Front")
+	if not animation or not animation:IsA("Animation") then return end
+
+	local track = animator:LoadAnimation(animation)
+	track.Priority = Enum.AnimationPriority.Action
+	track:Play()
+end
+
+-- ========== FOV EFFECT ==========
+local function ApplyFOVBoost(camera)
+	local originalFOV = camera.FieldOfView
+	local tweenInfo = TweenInfo.new(0.08, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+	local tween = TweenService:Create(camera, tweenInfo, {FieldOfView = originalFOV + FOV_BOOST})
+	tween:Play()
+	return originalFOV
+end
+
+local function RestoreFOV(camera, targetFOV)
+	if not camera or not camera.Parent then return end
+	local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+	local tween = TweenService:Create(camera, tweenInfo, {FieldOfView = targetFOV})
+	tween:Play()
+end
+
+-- ========== MAIN DASH (Blox Fruits style) ==========
+function DashModule.Execute(direction: string)
+	direction = direction or "Forward"
+
+	-- Cooldown check
+	if isDashing then return false end
+	if tick() - lastDashTime < COOLDOWN then return false end
+
+	local player = Players.LocalPlayer
+	if not player then return false end
+
+	local character = player.Character
+	if not character then return false end
+
+	local rootPart = character:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return false end
+
+	local humanoid = character:FindFirstChild("Humanoid")
+	if not humanoid or humanoid.Health <= 0 then return false end
+
+	-- Can't dash while seated, climbing, or swimming
+	local state = humanoid:GetState()
+	if state == Enum.HumanoidStateType.Seated
+		or state == Enum.HumanoidStateType.Climbing
+		or state == Enum.HumanoidStateType.Swimming then
+		return false
+	end
+
+	isDashing = true
+	lastDashTime = tick()
+
+	-- ===== CALCULATE DASH DIRECTION (camera-relative) =====
+	local camera = workspace.CurrentCamera
+	local camCF = camera.CFrame
+
+	local dashDir
+	if direction == "Forward" then
+		dashDir = camCF.LookVector
+	elseif direction == "Backward" then
+		dashDir = -camCF.LookVector
+	elseif direction == "Left" then
+		dashDir = -camCF.RightVector
+	elseif direction == "Right" then
+		dashDir = camCF.RightVector
+	else
+		dashDir = camCF.LookVector
+	end
+
+	-- Flatten to horizontal plane
+	dashDir = Vector3.new(dashDir.X, 0, dashDir.Z)
+	if dashDir.Magnitude > 0.001 then
+		dashDir = dashDir.Unit
+	else
+		dashDir = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
+	end
+
+	-- ===== PLAY ANIMATION =====
+	PlayDashAnimation(character)
+
+	-- ===== CREATE TRAIL =====
+	local trail, att0, att1 = CreateDashTrail(rootPart)
+
+	-- ===== CREATE PARTICLE VFX =====
+	local dashVFX = CreateDashVFX(rootPart)
+
+	-- ===== FOV BOOST (speed feel) =====
+	local originalFOV = ApplyFOVBoost(camera)
+
+	-- ===== DISABLE COLLISION (prevent fling) =====
+	local originalCollisions = {}
+	for _, part in ipairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			originalCollisions[part] = part.CanCollide
+			part.CanCollide = false
 		end
 	end
 
-	if not animation:IsA("Animation") then
-		warn("[DashModule] Object is not an Animation: " .. direction)
-		return false
+	-- ===== BRIEF INVINCIBILITY =====
+	local forceField = Instance.new("ForceField")
+	forceField.Name = "DashProtection"
+	forceField.Visible = false
+	forceField.Parent = character
+	task.delay(INVINCIBLE_TIME, function()
+		if forceField and forceField.Parent then
+			forceField:Destroy()
+		end
+	end)
+
+	-- ===== CREATE LinearVelocity (modern, smooth) =====
+	-- KEY: We do NOT use PlatformStand or Physics state.
+	-- The humanoid stays controllable the entire time.
+	-- LinearVelocity overrides movement during burst, then
+	-- we smoothly decelerate so the humanoid resumes naturally.
+	local attachment = Instance.new("Attachment")
+	attachment.Name = "DashAttachment"
+	attachment.Parent = rootPart
+
+	local linearVel = Instance.new("LinearVelocity")
+	linearVel.Name = "DashVelocity"
+	linearVel.Attachment0 = attachment
+	linearVel.VectorVelocity = dashDir * DASH_SPEED
+	linearVel.MaxForce = Vector3.new(math.huge, 0, math.huge)  -- Horizontal only
+	linearVel.RelativeTo = Enum.ActuatorRelativeTo.World
+	linearVel.Parent = rootPart
+
+	-- ===== BURST PHASE (full speed) =====
+	task.wait(DASH_DURATION)
+
+	-- ===== DECELERATION PHASE (smooth ease-out) =====
+	-- Instead of stopping instantly, we smoothly reduce speed
+	-- so the character naturally transitions back to walking
+	local decelStart = tick()
+	while true do
+		local elapsed = tick() - decelStart
+		local progress = math.clamp(elapsed / DASH_DECEL, 0, 1)
+
+		-- Quadratic ease-out: fast decel at start, gentle at end
+		local speed = DASH_SPEED * (1 - progress * progress)
+
+		if rootPart and rootPart.Parent and linearVel and linearVel.Parent then
+			linearVel.VectorVelocity = dashDir * speed
+		end
+
+		if progress >= 1 then break end
+		task.wait()
 	end
-	
-	
-	-- Load and play animation with high priority
-	local animationTrack = animator:LoadAnimation(animation)
-	animationTrack.Priority = Enum.AnimationPriority.Action
-	animationTrack:Play()
-	
-	
+
+	-- ===== CLEANUP =====
+	if linearVel and linearVel.Parent then linearVel:Destroy() end
+	if attachment and attachment.Parent then attachment:Destroy() end
+
+	-- Restore collision
+	for part, original in pairs(originalCollisions) do
+		if part and part.Parent then
+			part.CanCollide = original
+		end
+	end
+
+	-- Restore FOV smoothly
+	RestoreFOV(camera, originalFOV)
+
+	-- Cleanup VFX
+	CleanupDashVFX(dashVFX)
+	CleanupDashTrail(trail, att0, att1)
+
+	-- NO PlatformStand, NO Physics state, NO GettingUp state
+	-- The humanoid never lost control — it resumes walking instantly!
+
+	isDashing = false
 	return true
 end
 
-function DashModule.Execute(direction: string)
-	direction = direction or "Front"
+function DashModule.IsDashing()
+	return isDashing
+end
 
-	if isDashing then
-		return false
-	end
-
-	local player = Players.LocalPlayer
-	if not player then
-		return false
-	end
-	
-	local character = player.Character
-	if not character then
-		return false
-	end
-	
-	local rootPart = character:FindFirstChild("HumanoidRootPart")
-	if not rootPart then
-		return false
-	end
-	
-	local humanoid = character:FindFirstChild("Humanoid")
-	if not humanoid then
-		return false
-	end
-	
-	isDashing = true
-	
-	-- Tạo VFX
-	local dashVFX = CreateDashVFX(character, direction)
-	
-	-- ========== LƯU TRẠNG THÁI COLLISION GỐC ==========
-	local originalCollisions = {}
-	if DISABLE_COLLISIONS then
-		for _, part in ipairs(character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				originalCollisions[part] = part.CanCollide
-				part.CanCollide = false
-			end
-		end
-	end
-	
-	-- ========== THÊM FORCEFIELD ĐỂ BẢO VỆ ==========
-	local forceField = nil
-	if USE_FORCEFIELD then
-		forceField = Instance.new("ForceField")
-		forceField.Name = "DashProtection"
-		forceField.Visible = false
-		forceField.Parent = character
-	end
-	
-	-- Giữ character ổn định trong khi dash
-	humanoid.PlatformStand = true
-	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-
-	-- ========== PHÁT HIỆN VA CHẠM ĐỂ DỪNG DASH ==========
-	local dashCancelled = false
-
-	local touchConn
-	touchConn = rootPart.Touched:Connect(function(hit)
-		if dashCancelled then return end
-		if not hit or not hit.Parent then return end
-		
-		-- Bỏ qua các part thuộc character của mình
-		if hit:IsDescendantOf(character) then return end
-		
-		-- Bỏ qua Tool
-		if hit.Parent and hit.Parent:IsA("Tool") then return end
-		
-		-- Bỏ qua các part thuộc character người khác (không dừng khi chạm người)
-		local hitHumanoid = hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid")
-		if hitHumanoid then return end
-		
-		-- Chạm vật thể thế giới (tường, đá, sàn...) → dừng dash
-		dashCancelled = true
-	end)
-
-	-- Use pcall to ensure cleanup always runs
-	local success, err = pcall(function()
-		-- Play animation
-		PlayAnimation(character, direction)
-		
-		-- Calculate dash direction (Front or Back only)
-		local lookVector = rootPart.CFrame.LookVector
-		local dashDirection = lookVector -- Default forward
-		
-		if direction == "Front" then
-			dashDirection = lookVector
-		elseif direction == "Back" then
-			dashDirection = -lookVector
-		end
-		
-		-- Create BodyVelocity
-		local bodyVelocity = Instance.new("BodyVelocity")
-		bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-		bodyVelocity.Velocity = Vector3.new(dashDirection.X * DASH_SPEED, 0, dashDirection.Z * DASH_SPEED)
-		bodyVelocity.Parent = rootPart
-		
-		-- Dash cho đến khi hết thời gian HOẶC chạm vật thể
-		local startTime = tick()
-		while task.wait() do
-			if dashCancelled then break end
-			if tick() - startTime >= DASH_DURATION then break end
-		end
-		
-		-- Clean up
-		bodyVelocity:Destroy()
-	end)
-	
-	-- Ngắt kết nối Touched event
-	if touchConn then
-		touchConn:Disconnect()
-	end
-
-	-- ========== KHÔI PHỤC TRẠNG THÁI ==========
-	-- Khôi phục PlatformStand
-	humanoid.PlatformStand = false
-	
-	-- Khôi phục collision
-	if DISABLE_COLLISIONS then
-		for part, originalCanCollide in pairs(originalCollisions) do
-			if part and part.Parent then
-				part.CanCollide = originalCanCollide
-			end
-		end
-	end
-	
-	-- ========== XÓA FORCEFIELD ==========
-	if forceField then
-		forceField:Destroy()
-	end
-	
-	-- Xóa VFX
-	CleanupDashVFX(dashVFX)
-	
-	-- Dừng velocity dư thừa sau dash
-	if rootPart and rootPart.Parent then
-		rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-	end
-	
-	-- Chuyển HumanoidState về GettingUp để character đứng dậy và di chuyển lại
-	if humanoid and humanoid.Parent then
-		humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-	end
-	
-	if not success then
-		warn("[DashModule] Error during dash: " .. tostring(err))
-	end
-	
-	-- Cooldown - always reset isDashing
-	task.wait(COOLDOWN)
-	isDashing = false
-	
-	return success
+function DashModule.GetCooldownRemaining()
+	if isDashing then return COOLDOWN end
+	return math.max(0, COOLDOWN - (tick() - lastDashTime))
 end
 
 return DashModule

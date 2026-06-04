@@ -1,4 +1,4 @@
---[[
+﻿--[[
 	Combat Client - Script tấn công mới
 	- Nhấn M1 (chuột trái) để tấn công
 	- Tự động tìm mục tiêu trong phạm vi

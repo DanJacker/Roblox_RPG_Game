@@ -1,4 +1,4 @@
--- Welcome Help - Hiển thị GUI hướng dẫn khi player tham gia lần đầu
+﻿-- Welcome Help - Hiển thị GUI hướng dẫn khi player tham gia lần đầu
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
