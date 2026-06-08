@@ -1,21 +1,25 @@
--- MonsterManager - Quai vat tan cong ca player va bot (uu tien player)
+-- MonsterManager - Quai vat chi tan cong khi bi danh (aggro on hit)
+-- LEASH: Monster chi duoi player gan spawn, xa qua -> quay ve hoi mau
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-
 
 local CONFIG = {
 	DETECTION_RANGE = 100,
 	CHASE_RANGE = 80,
 	ATTACK_RANGE = 5,
-	ATTACK_DAMAGE = 3,  -- Giam tu 5 xuong 3
+	ATTACK_DAMAGE = 3,
 	ATTACK_COOLDOWN = 2.0,
 	MAX_HEALTH = 150,
 	WALK_SPEED = 16,
-	HP_REGEN = 3,
+	CHASE_SPEED_MULT = 1.3,
+	HP_REGEN_IDLE = 3,
+	HP_REGEN_COMBAT = 0,
+	HP_REGEN_RETURNING = 25,
 	PATROL_RANGE = 30,
 	RETREAT_HEALTH = 0.25,
 	RESPAWN_TIME = 8,
+	MAX_CHASE_FROM_SPAWN = 60,
 	MAX_MONSTERS = 3,
 }
 
@@ -65,68 +69,48 @@ local function createMonsterCharacter(monsterName)
 	return character
 end
 
+local moveTo
+
+local function returnToSpawn(monsterData)
+	monsterData.state = "returning"
+	monsterData.hasAggro = false
+	monsterData.aggroTarget = nil
+	local h = monsterData.character:FindFirstChildOfClass("Humanoid")
+	if h then
+		h.WalkSpeed = CONFIG.WALK_SPEED
+	end
+	moveTo(monsterData, monsterData.spawnPos)
+end
+
 local function findTarget(monsterData)
+	-- AGGRO-ON-HIT: Chi tim muc tieu khi da bi danh
+	if not monsterData.hasAggro then
+		return nil
+	end
+
 	local root = monsterData.character.PrimaryPart or monsterData.character:FindFirstChild("HumanoidRootPart")
 	if not root then return nil end
 	local pos = root.Position
 
-	local players = {}
-	local bots = {}
-
-	for _, p in Players:GetPlayers() do
-		if p.Character then
-			local h = p.Character:FindFirstChildOfClass("Humanoid")
-			local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+	-- Kiem tra aggro target (player da danh minh)
+	if monsterData.aggroTarget and monsterData.aggroTarget.Parent then
+		local targetChar = monsterData.aggroTarget.Character
+		if targetChar then
+			local h = targetChar:FindFirstChildOfClass("Humanoid")
+			local hrp = targetChar:FindFirstChild("HumanoidRootPart")
 			if h and h.Health > 0 and hrp then
 				local d = (hrp.Position - pos).Magnitude
-				if d < CONFIG.DETECTION_RANGE then
-					table.insert(players, {type = "player", instance = p, position = hrp.Position, distance = d})
+				-- KIEM TRA LEASH: Player phai nam trong MAX_CHASE_FROM_SPAWN tu spawn
+				local distFromSpawn = (hrp.Position - monsterData.spawnPos).Magnitude
+				if d <= CONFIG.DETECTION_RANGE and distFromSpawn <= CONFIG.MAX_CHASE_FROM_SPAWN then
+					return {type = "player", instance = monsterData.aggroTarget, position = hrp.Position, distance = d}
 				end
 			end
 		end
 	end
-
-	-- SỬA: Sử dụng _G.BotManager để lấy TẤT CẢ bot từ tất cả managers
-	local BotManager = _G.BotManager
-	if BotManager and BotManager.GetActiveBots then
-		local activeBots = BotManager.GetActiveBots()
-		for bot, data in pairs(activeBots) do
-			if data.state ~= "dead" then
-				local hrp = bot:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local d = (hrp.Position - pos).Magnitude
-					if d < CONFIG.DETECTION_RANGE then
-						table.insert(bots, {type = "bot", instance = bot, position = hrp.Position, distance = d, team = data.team})
-					end
-				end
-			end
-		end
-	else
-		-- Fallback: Tìm bot trực tiếp trong workspace
-		for _, obj in ipairs(workspace:GetDescendants()) do
-			if obj:IsA("Model") and obj:GetAttribute("Team") then
-				local hrp = obj:FindFirstChild("HumanoidRootPart")
-				local h = obj:FindFirstChildOfClass("Humanoid")
-				if hrp and h and h.Health > 0 then
-					local d = (hrp.Position - pos).Magnitude
-					if d < CONFIG.DETECTION_RANGE then
-						table.insert(bots, {type = "bot", instance = obj, position = hrp.Position, distance = d, team = obj:GetAttribute("Team")})
-					end
-				end
-			end
-		end
-	end
-
-	table.sort(players, function(a, b) return a.distance < b.distance end)
-	if #players > 0 and players[1].distance <= CONFIG.CHASE_RANGE then
-		return players[1]
-	end
-
-	table.sort(bots, function(a, b) return a.distance < b.distance end)
-	if #bots > 0 then
-		return bots[1]
-	end
-
+	-- Aggro target mat hoac xa qua -> mat aggro, quay ve spawn
+	monsterData.hasAggro = false
+	monsterData.aggroTarget = nil
 	return nil
 end
 
@@ -153,7 +137,7 @@ local function attack(monsterData, target)
 	end
 end
 
-local function moveTo(monsterData, pos)
+moveTo = function(monsterData, pos)
 	local h = monsterData.character:FindFirstChildOfClass("Humanoid")
 	local hrp = monsterData.character:FindFirstChild("HumanoidRootPart")
 	if h and hrp then
@@ -163,14 +147,15 @@ end
 
 local function regenerateHP(monsterData, deltaTime)
 	local h = monsterData.character:FindFirstChildOfClass("Humanoid")
-	if h and h.Health > 0 then
-		h.Health = math.min(h.Health + CONFIG.HP_REGEN * deltaTime, h.MaxHealth)
-	end
-end
+	if not h or h.Health <= 0 then return end
 
-local function shouldRetreat(monsterData)
-	local h = monsterData.character:FindFirstChildOfClass("Humanoid")
-	return h and h.Health / h.MaxHealth < CONFIG.RETREAT_HEALTH
+	if monsterData.hasAggro then
+		h.Health = math.min(h.Health + CONFIG.HP_REGEN_COMBAT * deltaTime, h.MaxHealth)
+	elseif monsterData.state == "returning" then
+		h.Health = math.min(h.Health + CONFIG.HP_REGEN_RETURNING * deltaTime, h.MaxHealth)
+	else
+		h.Health = math.min(h.Health + CONFIG.HP_REGEN_IDLE * deltaTime, h.MaxHealth)
+	end
 end
 
 local function updateAI(monsterData)
@@ -183,16 +168,45 @@ local function updateAI(monsterData)
 		return
 	end
 
-	if shouldRetreat(monsterData) then
-		monsterData.state = "retreating"
-		if monsterData.spawnPos then
-			moveTo(monsterData, monsterData.spawnPos)
+	-- DANG QUAY VE SPAWN
+	if monsterData.state == "returning" then
+		if monsterData.hasAggro and monsterData.aggroTarget then
+			monsterData.state = "chasing"
+			h.WalkSpeed = CONFIG.WALK_SPEED * CONFIG.CHASE_SPEED_MULT
+		else
+			local distToSpawn = (hrp.Position - monsterData.spawnPos).Magnitude
+			if distToSpawn <= 8 then
+				monsterData.state = "idle"
+				monsterData.hasAggro = false
+				monsterData.aggroTarget = nil
+			else
+				moveTo(monsterData, monsterData.spawnPos)
+				return
+			end
 		end
+	end
+
+	-- LEASH: Monster xa spawn qua -> mat aggro, quay ve hoi mau
+	local distFromSpawn = (hrp.Position - monsterData.spawnPos).Magnitude
+	if distFromSpawn > CONFIG.MAX_CHASE_FROM_SPAWN then
+		returnToSpawn(monsterData)
 		return
 	end
 
+	-- KHONG CO AGGRO -> DUNG YEN TAI SPAWN
+	if not monsterData.hasAggro then
+		if distFromSpawn > 15 then
+			returnToSpawn(monsterData)
+			return
+		end
+		monsterData.state = "idle"
+		return
+	end
+
+	-- CO AGGRO -> TIM MUC TIEU
 	local target = findTarget(monsterData)
 	if target then
+		h.WalkSpeed = CONFIG.WALK_SPEED * CONFIG.CHASE_SPEED_MULT
 		if target.distance <= CONFIG.ATTACK_RANGE then
 			monsterData.state = "attacking"
 			attack(monsterData, target)
@@ -203,12 +217,8 @@ local function updateAI(monsterData)
 			monsterData.state = "idle"
 		end
 	else
-		monsterData.state = "patrolling"
-		if not monsterData.patrolTarget or tick() - monsterData.lastPatrol > 6 then
-			monsterData.patrolTarget = monsterData.spawnPos + Vector3.new(math.random(-CONFIG.PATROL_RANGE, CONFIG.PATROL_RANGE), 0, math.random(-CONFIG.PATROL_RANGE, CONFIG.PATROL_RANGE))
-			monsterData.lastPatrol = tick()
-		end
-		moveTo(monsterData, monsterData.patrolTarget)
+		-- KHONG TIM THAY MUC TIEU -> QUAY VE SPAWN HOI MAU
+		returnToSpawn(monsterData)
 	end
 end
 
@@ -244,6 +254,8 @@ local function spawnMonster(spawnPos)
 		spawnPos = spawnPos,
 		patrolTarget = nil,
 		lastPatrol = 0,
+		hasAggro = false,
+		aggroTarget = nil,
 	}
 
 	activeMonsters[character] = monsterData
@@ -252,11 +264,44 @@ local function spawnMonster(spawnPos)
 	if humanoid then
 		humanoid.Died:Connect(function()
 			monsterData.state = "dead"
+			monsterData.hasAggro = false
+			monsterData.aggroTarget = nil
 			task.delay(CONFIG.RESPAWN_TIME, function()
 				if character and character.Parent then character.Parent = nil end
 				activeMonsters[character] = nil
 				spawnMonster(spawnPos)
 			end)
+		end)
+
+		-- AGGRO-ON-HIT: Monster bi danh -> bat dau truy duoi
+		humanoid.HealthChanged:Connect(function(newHealth)
+			if newHealth < humanoid.MaxHealth and monsterData.state ~= "dead" then
+				monsterData.hasAggro = true
+
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local closestPlayer = nil
+					local closestDist = math.huge
+					for _, p in Players:GetPlayers() do
+						if p.Character then
+							local pH = p.Character:FindFirstChildOfClass("Humanoid")
+							local pHrp = p.Character:FindFirstChild("HumanoidRootPart")
+							if pH and pH.Health > 0 and pHrp then
+								local d = (pHrp.Position - hrp.Position).Magnitude
+								-- Chi aggro player trong pham vi spawn
+								local pDistFromSpawn = (pHrp.Position - spawnPos).Magnitude
+								if d < closestDist and d <= CONFIG.DETECTION_RANGE and pDistFromSpawn <= CONFIG.MAX_CHASE_FROM_SPAWN then
+									closestDist = d
+									closestPlayer = p
+								end
+							end
+						end
+					end
+					if closestPlayer then
+						monsterData.aggroTarget = closestPlayer
+					end
+				end
+			end
 		end)
 	end
 

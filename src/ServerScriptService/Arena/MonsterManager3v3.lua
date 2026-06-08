@@ -14,11 +14,11 @@ local CONFIG = {
 	-- ========== PHAM VI TAN CONG ==========
 	-- Day la "lanh tho" cua quai - ban kinh tu vi tri spawn
 	-- Player di ra khoi pham vi nay -> monster NGUNG tan cong, quay ve spawn hoi mau
-	ATTACK_TERRITORY = 200,     -- Ban kinh lanh tho tu spawn (studs)
+	ATTACK_TERRITORY = 60,      -- Ban kinh lanh tho tu spawn (studs) - chi duoi gan spawn
 
 	-- Khoang cach toi da tu monster den player de giu aggro
 	-- Neu player xa qua (vuot khoang nay) -> mat aggro, quay ve spawn
-	LEASH_LOSE_RANGE = 150,    -- Khoang cach monster-player toi da de giu aggro
+	LEASH_LOSE_RANGE = 50,     -- Khoang cach monster-player toi da de giu aggro
 
 	ATTACK_RANGE = 14,         -- Pham vi danh gan
 	ATTACK_DAMAGE = 15,
@@ -29,8 +29,8 @@ local CONFIG = {
 
 	-- ========== HOI MAU ==========
 	HP_REGEN_COMBAT = 0,       -- KHONG hoi mau khi dang combat
-	HP_REGEN_IDLE = 5,        -- Hoi mau khi idle (dung yen tai spawn)
-	HP_REGEN_RETURNING = 15,  -- Hoi mau nhanh khi dang quay ve spawn
+	HP_REGEN_IDLE = 50,        -- Hoi mau khi idle (dung yen tai spawn)
+	HP_REGEN_RETURNING = 50,  -- Hoi mau rat nhanh khi dang quay ve spawn
 
 	-- ========== RESPAWN ==========
 	RESPAWN_TIME = 10,
@@ -176,52 +176,8 @@ local function findTarget(monsterData)
 		monsterData.lastKnownTargetPos = nil
 	end
 
-	-- ========== TIM PLAYER KHAC GAN NHAT (neu van con aggro) ==========
-	local players = {}
-	local bots = {}
-
-	for _, p in Players:GetPlayers() do
-		if p.Character then
-			local h = p.Character:FindFirstChildOfClass("Humanoid")
-			local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-			if h and h.Health > 0 and hrp then
-				if isInSafeZone(p, hrp.Position) then continue end
-				-- Kiem tra player nam trong territory VA trong range
-				if isTargetInTerritory(monsterData, hrp.Position) and isTargetInRange(monsterPos, hrp.Position) then
-					local d = (hrp.Position - monsterPos).Magnitude
-					table.insert(players, {type = "player", instance = p, position = hrp.Position, distance = d})
-				end
-			end
-		end
-	end
-
-	if _G.BotManager3v3 then
-		local activeBots = _G.BotManager3v3.GetActiveBots()
-		for bot, data in pairs(activeBots) do
-			if data.state ~= "dead" then
-				local hrp = bot:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					if isTargetInTerritory(monsterData, hrp.Position) and isTargetInRange(monsterPos, hrp.Position) then
-						local d = (hrp.Position - monsterPos).Magnitude
-						table.insert(bots, {type = "bot", instance = bot, position = hrp.Position, distance = d, team = data.team})
-					end
-				end
-			end
-		end
-	end
-
-	-- Uu tien player gan nhat
-	table.sort(players, function(a, b) return a.distance < b.distance end)
-	if #players > 0 then
-		return players[1]
-	end
-
-	-- Sau do den bot
-	table.sort(bots, function(a, b) return a.distance < b.distance end)
-	if #bots > 0 then
-		return bots[1]
-	end
-
+	-- AGGRO-ON-HIT: Chi tan cong player da danh minh, KHONG chuyen sang player khac
+	-- Neu aggroTarget mat -> tra ve nil (monster se quay ve spawn hoi mau)
 	return nil
 end
 

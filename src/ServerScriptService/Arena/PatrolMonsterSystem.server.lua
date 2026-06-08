@@ -19,7 +19,10 @@ local CONFIG = {
 	MAX_HEALTH = 120,
 	PATROL_REPICK_MIN = 2,
 	PATROL_REPICK_MAX = 5,
-	CHASE_LEASH = 1.15,
+	CHASE_LEASH = 1.1,  -- Monster quay ve zone center neu xa qua zoneRadius * 1.1
+	HP_REGEN_IDLE = 2,
+	HP_REGEN_COMBAT = 0,
+	HP_REGEN_RETURNING = 20,  -- Hoi mau nhanh khi dang quay ve zone center
 	MONSTER_TINT = Color3.fromRGB(120, 80, 160),
 }
 
@@ -270,43 +273,32 @@ local function refreshBotCandidates(container)
 end
 
 local function findBestTarget(data, myPos)
-	local zoneR = data.zoneRadius + CONFIG.DETECTION_BUFFER
-	local bestPlayerChar, bestPlayerD = nil, zoneR + 1
-	local bestBotChar, bestBotD = nil, zoneR + 1
-
-	for _, plr in Players:GetPlayers() do
-		local char = plr.Character
-		if isHostileCharacter(char, data.model) then
-			local hrp = getRoot(char)
-			local d = flatDist(myPos, hrp.Position)
-			if d <= zoneR and d < bestPlayerD then
-				bestPlayerD = d
-				bestPlayerChar = char
-			end
-		end
+	-- AGGRO-ON-HIT: Chi tan cong khi bi danh truoc
+	if not data.hasAggro then
+		return nil, nil
 	end
 
-	if bestPlayerChar then
-		return bestPlayerChar, bestPlayerD
-	end
-
-	local container = data.mapContainer or Workspace
-	for _, inst in refreshBotCandidates(container) do
-		if inst ~= data.model and isHostileCharacter(inst, data.model) then
-			local hrp = getRoot(inst)
-			if hrp then
-				local d = flatDist(myPos, hrp.Position)
-				if d <= zoneR and d < bestBotD then
-					bestBotD = d
-					bestBotChar = inst
+	-- Kiem tra aggro target (player da danh minh)
+	if data.aggroTarget then
+		local plr = data.aggroTarget
+		if plr and plr.Parent then
+			local char = plr.Character
+			if isHostileCharacter(char, data.model) then
+				local hrp = getRoot(char)
+				if hrp then
+					local d = flatDist(myPos, hrp.Position)
+					local maxRange = data.zoneRadius * CONFIG.CHASE_LEASH
+					if d <= maxRange then
+						return char, d
+					end
 				end
 			end
 		end
+		-- Aggro target mat (chet/xa/ve base) -> mat aggro
+		data.hasAggro = false
+		data.aggroTarget = nil
 	end
 
-	if bestBotChar then
-		return bestBotChar, bestBotD
-	end
 	return nil, nil
 end
 
@@ -343,10 +335,32 @@ local function updateMonster(data, dt)
 
 	local pos = hrp.Position
 
+	-- LEASH: Monster xa zone qua -> quay ve zone center, hoi mau nhanh
 	if flatDist(pos, data.zoneCenter) > data.zoneRadius * CONFIG.CHASE_LEASH then
 		data.chaseTarget = nil
+		data.hasAggro = false
+		data.aggroTarget = nil
+		data.isReturning = true
 		hum:MoveTo(Vector3.new(data.zoneCenter.X, pos.Y, data.zoneCenter.Z))
+		-- Hoi mau nhanh khi dang quay ve
+		hum.Health = math.min(hum.Health + CONFIG.HP_REGEN_RETURNING * dt, hum.MaxHealth)
 		return
+	end
+
+	-- Da ve gan zone center -> het trang thai returning
+	if data.isReturning then
+		if flatDist(pos, data.zoneCenter) <= 8 then
+			data.isReturning = false
+		end
+	end
+
+	-- Hoi mau theo trang thai
+	if data.hasAggro then
+		hum.Health = math.min(hum.Health + CONFIG.HP_REGEN_COMBAT * dt, hum.MaxHealth)
+	elseif data.isReturning then
+		hum.Health = math.min(hum.Health + CONFIG.HP_REGEN_RETURNING * dt, hum.MaxHealth)
+	else
+		hum.Health = math.min(hum.Health + CONFIG.HP_REGEN_IDLE * dt, hum.MaxHealth)
 	end
 
 	local target, tDist = findBestTarget(data, pos)
@@ -399,10 +413,45 @@ function PatrolMonster.Spawn(opts)
 		chaseTarget = nil,
 		nextPatrol = 0,
 		patrolGoal = nil,
+		hasAggro = false,
+		aggroTarget = nil,
+		isReturning = false,
 	}
 
 	hum.Died:Connect(function()
 		active[char] = nil
+	end)
+
+	-- AGGRO-ON-HIT: Monster bi danh -> bat dau truy duoi player do
+	hum.HealthChanged:Connect(function(newHealth)
+		if newHealth < hum.MaxHealth then
+			local mData = active[char]
+			if not mData or mData.hasAggro then return end
+
+			-- Tim player gan nhat lam aggro target
+			local hrp = getRoot(char)
+			if hrp then
+				local closestPlayer = nil
+				local closestDist = math.huge
+				for _, p in Players:GetPlayers() do
+					if p.Character then
+						local pH = p.Character:FindFirstChildOfClass("Humanoid")
+						local pHrp = getRoot(p.Character)
+						if pH and pH.Health > 0 and pHrp then
+							local d = flatDist(hrp.Position, pHrp.Position)
+							if d < closestDist and d <= zoneR * CONFIG.CHASE_LEASH then
+								closestDist = d
+								closestPlayer = p
+							end
+						end
+					end
+				end
+				if closestPlayer then
+					mData.hasAggro = true
+					mData.aggroTarget = closestPlayer
+				end
+			end
+		end
 	end)
 
 	return char

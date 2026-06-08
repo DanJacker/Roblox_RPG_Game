@@ -269,19 +269,17 @@ local function onCombatRequest(player, target, damage)
     
     -- Check if target died
     if targetHumanoid.Health <= 0 then
-        
-        -- Record kill for player killing bot
+
+        -- Record kill for player killing bot (count towards team/MVP)
         if isBot and _G.MatchEndConditions then
             _G.MatchEndConditions.RecordKill(player, {name = targetName, team = botTeam})
         end
-        
-        -- Record kill for player killing monster
-        if isMonster and _G.MatchEndConditions then
-            _G.MatchEndConditions.RecordKill(player, {name = targetName, team = "Monster"})
-        end
-        
-        -- Record kill for MVPSystem
-        if _G.MVPSystem and (isBot or isMonster) then
+
+        -- NOTE: Do NOT record kills for monsters in team or MVP systems.
+        -- Monsters are neutral PvE targets and should not affect team scores or MVP.
+
+        -- Record kill for MVPSystem only for bot kills (player-vs-player handled elsewhere)
+        if _G.MVPSystem and isBot then
             _G.MVPSystem.RecordKill(player.Name, targetName)
         end
     end
