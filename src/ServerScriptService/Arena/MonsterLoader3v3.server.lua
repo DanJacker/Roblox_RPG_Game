@@ -17,30 +17,25 @@ print("[MonsterLoader3v3] MonsterManager3v3 da duoc load!")
 -- Team2Base (Nhà ĐỎ): 112.7, -7811.0
 -- Trung điểm (Khu RỪNG): -136.4, -7556.7
 -- Quái CHỈ spawn ở khu rừng, KHÔNG spawn gần nhà đỏ hay nhà xanh
+-- Mỗi bãi quái có thời gian hồi sinh (respawnTime) khác nhau
 local MONSTER_SPAWN_POSITIONS = {
-	-- Phân tán khắp map 3v3, XA cả 2 base
-	-- Map3v3: X(-485 to 184), Z(-7874 to -7206)
-	-- Team1Base: -385, -7302 | Team2Base: 113, -7811
-	-- Giữ khoảng cách tối thiểu 120 studs từ mỗi base
+	-- Cụm TRUNG TÂM khu rừng (6 con) - Hồi sinh nhanh nhất (khu vực tranh giành)
+	{ pos = Vector3.new(-136, 10, -7556), respawnTime = 8 },    -- Trung tâm rừng
+	{ pos = Vector3.new(-180, 10, -7520), respawnTime = 9 },    -- Rừng trái
+	{ pos = Vector3.new(-90, 10, -7520),  respawnTime = 9 },    -- Rừng phải
+	{ pos = Vector3.new(-136, 10, -7600), respawnTime = 10 },   -- Rừng dưới
+	{ pos = Vector3.new(-136, 10, -7500), respawnTime = 10 },   -- Rừng trên
+	{ pos = Vector3.new(-200, 10, -7556), respawnTime = 11 },  -- Rừng sâu trái
 
-	-- Khu phía TRÊN map (xa Team1Base)
-	Vector3.new(-300, 10, -7380),    -- Trên trái (xa base)
-	Vector3.new(-200, 10, -7350),    -- Trên giữa-trái
-	Vector3.new(-100, 10, -7320),    -- Trên giữa
+	-- Cụm RỪNG TRÁI (3 con) - Hồi sinh trung bình
+	{ pos = Vector3.new(-280, 10, -7500), respawnTime = 13 },  -- Rừng trái trên
+	{ pos = Vector3.new(-280, 10, -7580), respawnTime = 14 },  -- Rừng trái giữa
+	{ pos = Vector3.new(-280, 10, -7660), respawnTime = 15 },  -- Rừng trái dưới
 
-	-- Khu GIỮA map (khu rừng - xa cả 2 base)
-	Vector3.new(-136, 10, -7556),    -- Trung tâm
-	Vector3.new(-250, 10, -7500),    -- Giữa-trái
-	Vector3.new(0, 10, -7500),       -- Giữa-phải
-
-	-- Khu phía DƯỚI map (xa Team2Base)
-	Vector3.new(-50, 10, -7700),     -- Dưới giữa
-	Vector3.new(-150, 10, -7720),    -- Dưới giữa-trái
-	Vector3.new(-200, 10, -7680),    -- Dưới trái
-
-	-- Lane 2 bên (giữa map, xa base)
-	Vector3.new(-350, 10, -7550),    -- Lane trái
-	Vector3.new(50, 10, -7550),      -- Lane phải
+	-- Cụm RỪNG PHẢI (3 con) - Hồi sinh lâu nhất (xa trung tâm)
+	{ pos = Vector3.new(10, 10, -7500),   respawnTime = 13 },  -- Rừng phải trên
+	{ pos = Vector3.new(10, 10, -7580),   respawnTime = 14 },  -- Rừng phải giữa
+	{ pos = Vector3.new(10, 10, -7660),   respawnTime = 15 },  -- Rừng phải dưới
 }
 
 local SPAWN_DELAY = 3 -- Giay sau khi tran bat dau
@@ -52,9 +47,9 @@ local function spawnMonsters()
 	MonsterManager3v3.ClearAllMonsters()
 	
 	-- Spawn quai tai cac vi tri
-	for i, pos in ipairs(MONSTER_SPAWN_POSITIONS) do
+	for i, spawnInfo in ipairs(MONSTER_SPAWN_POSITIONS) do
 		task.wait(0.5) -- Delay giua cac lan spawn
-		MonsterManager3v3.SpawnMonster(pos)
+		MonsterManager3v3.SpawnMonster(spawnInfo.pos, spawnInfo.respawnTime)
 	end
 
 	print(string.format("[MonsterLoader3v3] Da spawn %d quai vat!", #MONSTER_SPAWN_POSITIONS))

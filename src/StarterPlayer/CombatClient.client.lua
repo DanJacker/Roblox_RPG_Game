@@ -149,9 +149,11 @@ local function playAttackAnimation()
 	
 	
 	
-	-- Dừng animation cũ nếu có
+	-- Dừng animation cũ nếu có (pcall de tranh loi khi character da chet)
 	if attackTrack then
-		attackTrack:Stop()
+		pcall(function() attackTrack:Stop() end)
+		attackTrack = nil
+		isAttacking = false
 	end
 	
 	-- Load và phát animation
@@ -274,6 +276,34 @@ local function onAttack()
 		dealDamage(target)
 		-- Tạo VFX impact khi đánh trúng
 		createImpactVFX(target)
+	end
+end
+
+-- ========== RESET KHI PLAYER CHET ==========
+-- Khi player chet, isAttacking co bi ket lai true
+player.CharacterAdded:Connect(function(character)
+	isAttacking = false
+	attackTrack = nil
+	local humanoid = character:WaitForChild("Humanoid", 10)
+	if humanoid then
+		humanoid.Died:Connect(function()
+			isAttacking = false
+			attackTrack = nil
+		end)
+	end
+end)
+
+-- Xu ly cho character hien tai (neu da co khi script chay)
+do
+	local currentChar = player.Character
+	if currentChar then
+		local h = currentChar:FindFirstChildOfClass("Humanoid")
+		if h then
+			h.Died:Connect(function()
+				isAttacking = false
+				attackTrack = nil
+			end)
+		end
 	end
 end
 

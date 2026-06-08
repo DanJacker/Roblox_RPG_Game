@@ -1,5 +1,8 @@
 -- MonsterManager3v3 - Quai vat cho che do 3v3
--- Tan cong ca player va bot (uu tien player)
+-- LOGIC CHINH:
+-- 1. Monster danh den chet (khong bo chay khi HP thap)
+-- 2. Player di ra khoi pham vi tan cong -> monster dung tan cong, quay ve spawn hoi mau
+-- 3. Monster chi tan cong khi bi kich (aggro on hit)
 -- ServerScriptService.Arena.MonsterManager3v3
 
 local Players = game:GetService("Players")
@@ -8,29 +11,35 @@ local RunService = game:GetService("RunService")
 print("[MonsterManager3v3] Khoi dong...")
 
 local CONFIG = {
-	DETECTION_RANGE = 150,      -- Tang pham vi phat hien
-	CHASE_RANGE = 120,           -- Tang pham vi truy duoi
-	ATTACK_RANGE = 14,
-	ATTACK_DAMAGE = 3,          -- Giam sat thuong xuong 3
-	ATTACK_COOLDOWN = 1.5,      -- Giam cooldown
+	-- ========== PHAM VI TAN CONG ==========
+	-- Day la "lanh tho" cua quai - ban kinh tu vi tri spawn
+	-- Player di ra khoi pham vi nay -> monster NGUNG tan cong, quay ve spawn hoi mau
+	ATTACK_TERRITORY = 200,     -- Ban kinh lanh tho tu spawn (studs)
+
+	-- Khoang cach toi da tu monster den player de giu aggro
+	-- Neu player xa qua (vuot khoang nay) -> mat aggro, quay ve spawn
+	LEASH_LOSE_RANGE = 150,    -- Khoang cach monster-player toi da de giu aggro
+
+	ATTACK_RANGE = 14,         -- Pham vi danh gan
+	ATTACK_DAMAGE = 15,
+	ATTACK_COOLDOWN = 1.5,
 	MAX_HEALTH = 250,
-	WALK_SPEED = 22,            -- Tang toc do
-	CHASE_SPEED_MULT = 1.4,     -- Tang toc do khi truy duoi player
-	HP_REGEN = 5,
-	PATROL_RANGE = 40,
-	RETREAT_HEALTH = 0.20,     -- Giam nguong rut lui
+	WALK_SPEED = 22,
+	CHASE_SPEED_MULT = 1.4,   -- Tang toc do khi truy duoi
+
+	-- ========== HOI MAU ==========
+	HP_REGEN_COMBAT = 0,       -- KHONG hoi mau khi dang combat
+	HP_REGEN_IDLE = 5,        -- Hoi mau khi idle (dung yen tai spawn)
+	HP_REGEN_RETURNING = 15,  -- Hoi mau nhanh khi dang quay ve spawn
+
+	-- ========== RESPAWN ==========
 	RESPAWN_TIME = 10,
 	MAX_MONSTERS = 12,
-	AGGRESSIVE_CHASE = false,    -- TAT: monster ngung duoi khi player di qua xa
-	MAX_CHASE_DISTANCE = 150,   -- Khoang cach toi da tu vi tri spawn, vuot qua thi quay ve
-	-- Safe zone config - players in their base are protected from monsters
-	SAFE_ZONE_RADIUS = 100,     -- Radius around each team base where players are safe
-	TEAM1_BASE_CENTER = Vector3.new(-385, 12, -7302),  -- Team1Base position
-	TEAM2_BASE_CENTER = Vector3.new(113, 12, -7811),   -- Team2Base position
-	-- Monster stop zone - monster ngung duoi khi den gan bat ky base nao
-	BASE_STOP_RADIUS = 120,       -- Monster ngung duoi khi trong ban kinh nay quanh bat ky base
-	-- Vi tri "cua" cua monster - monster quay ve day khi ngung duoi
-	MONSTER_DOOR_POSITION = Vector3.new(-136, 10, -7556), -- Khu rung (giua map)
+
+	-- ========== SAFE ZONE (khu vung an toan cua team) ==========
+	SAFE_ZONE_RADIUS = 100,
+	TEAM1_BASE_CENTER = Vector3.new(-385, 12, -7302),
+	TEAM2_BASE_CENTER = Vector3.new(113, 12, -7811),
 }
 
 local activeMonsters = {}
@@ -84,72 +93,116 @@ end
 local function isInSafeZone(player, position)
 	local teamName = player.Team and player.Team.Name
 	if not teamName then return false end
-	
+
 	if teamName == "Team1" then
-		-- Check if player is near Team1 base
 		local distanceToBase = (position - CONFIG.TEAM1_BASE_CENTER).Magnitude
 		return distanceToBase <= CONFIG.SAFE_ZONE_RADIUS
 	elseif teamName == "Team2" then
-		-- Check if player is near Team2 base
 		local distanceToBase = (position - CONFIG.TEAM2_BASE_CENTER).Magnitude
 		return distanceToBase <= CONFIG.SAFE_ZONE_RADIUS
 	end
-	
+
 	return false
 end
 
--- Check if monster is too close to ANY team base - ngung duoi nua
-local function isNearAnyBase(monsterPosition)
-	local distanceToTeam1Base = (monsterPosition - CONFIG.TEAM1_BASE_CENTER).Magnitude
-	local distanceToTeam2Base = (monsterPosition - CONFIG.TEAM2_BASE_CENTER).Magnitude
-	return distanceToTeam1Base <= CONFIG.BASE_STOP_RADIUS or distanceToTeam2Base <= CONFIG.BASE_STOP_RADIUS
+-- ========== KIEM TRA PLAYER CO NAM TRONG PHAM VI TAN CONG CUA QUAI KHONG ==========
+-- Player phai nam trong ATTACK_TERRITORY (tu spawn) VA khong xa monster qua LEASH_LOSE_RANGE
+local function isTargetInTerritory(monsterData, targetPosition)
+	local distFromSpawn = (targetPosition - monsterData.spawnPos).Magnitude
+	return distFromSpawn <= CONFIG.ATTACK_TERRITORY
+end
+
+local function isTargetInRange(monsterPosition, targetPosition)
+	local distFromMonster = (targetPosition - monsterPosition).Magnitude
+	return distFromMonster <= CONFIG.LEASH_LOSE_RANGE
 end
 
 local moveTo
 
--- Monster quay ve "cua" cua minh (khu rung) khi ngung duoi
-local function returnToMonsterDoor(monsterData)
-	monsterData.state = "returningToDoor"
-	moveTo(monsterData, CONFIG.MONSTER_DOOR_POSITION)
+-- ========== QUAY VE SPAWN VA HOI MAU ==========
+-- Monster mat aggro -> quay ve spawn, hoi mau nhanh
+local function returnToSpawn(monsterData)
+	monsterData.state = "returning"
+	monsterData.hasAggro = false
+	monsterData.aggroTarget = nil
+	monsterData.lastKnownTargetPos = nil
+	local h = monsterData.character:FindFirstChildOfClass("Humanoid")
+	if h then
+		h.WalkSpeed = CONFIG.WALK_SPEED
+	end
+	moveTo(monsterData, monsterData.spawnPos)
 end
 
+-- ========== TIM MUC TIEU ==========
+-- Chi tim khi da co aggro (bi danh)
+-- Kiem tra 2 dieu kien de giu aggro:
+--   1. Player con trong ATTACK_TERRITORY (tu spawn)
+--   2. Player khong xa monster qua LEASH_LOSE_RANGE
 local function findTarget(monsterData)
+	-- CHUA BI DANH -> KHONG TIM MUC TIEU
+	if not monsterData.hasAggro then
+		return nil
+	end
+
 	local root = monsterData.character.PrimaryPart or monsterData.character:FindFirstChild("HumanoidRootPart")
 	if not root then return nil end
-	local pos = root.Position
+	local monsterPos = root.Position
 
+	-- ========== KIEM TRA AGGRO TARGET (player da danh minh) ==========
+	if monsterData.aggroTarget and monsterData.aggroTarget.Parent then
+		local targetChar = monsterData.aggroTarget.Character
+		if targetChar then
+			local h = targetChar:FindFirstChildOfClass("Humanoid")
+			local hrp = targetChar:FindFirstChild("HumanoidRootPart")
+			if h and h.Health > 0 and hrp then
+				-- Kiem tra: player khong o safe zone
+				if not isInSafeZone(monsterData.aggroTarget, hrp.Position) then
+					-- KIEM TRA 2 DIEU KIEN DE GIU AGGRO:
+					-- 1. Player con trong ATTACK_TERRITORY (tu spawn)
+					local inTerritory = isTargetInTerritory(monsterData, hrp.Position)
+					-- 2. Player khong xa monster qua LEASH_LOSE_RANGE
+					local inRange = isTargetInRange(monsterPos, hrp.Position)
+
+					if inTerritory and inRange then
+						monsterData.lastKnownTargetPos = hrp.Position
+						local d = (hrp.Position - monsterPos).Magnitude
+						return {type = "player", instance = monsterData.aggroTarget, position = hrp.Position, distance = d}
+					end
+				end
+			end
+		end
+		-- Player da chet / ve base / ra khoi pham vi tan cong -> MAT AGGRO
+		monsterData.aggroTarget = nil
+		monsterData.lastKnownTargetPos = nil
+	end
+
+	-- ========== TIM PLAYER KHAC GAN NHAT (neu van con aggro) ==========
 	local players = {}
 	local bots = {}
 
-	-- Tim players trong pham vi - UU TIEN CAO
 	for _, p in Players:GetPlayers() do
 		if p.Character then
 			local h = p.Character:FindFirstChildOfClass("Humanoid")
 			local hrp = p.Character:FindFirstChild("HumanoidRootPart")
 			if h and h.Health > 0 and hrp then
-				-- Skip players in safe zone (their team's base)
-				if isInSafeZone(p, hrp.Position) then
-					continue
-				end
-				
-				local d = (hrp.Position - pos).Magnitude
-				-- Tang pham vi phat hien player
-				if d < CONFIG.DETECTION_RANGE * 1.2 then
+				if isInSafeZone(p, hrp.Position) then continue end
+				-- Kiem tra player nam trong territory VA trong range
+				if isTargetInTerritory(monsterData, hrp.Position) and isTargetInRange(monsterPos, hrp.Position) then
+					local d = (hrp.Position - monsterPos).Magnitude
 					table.insert(players, {type = "player", instance = p, position = hrp.Position, distance = d})
 				end
 			end
 		end
 	end
 
-	-- Tim bots tu BotManager3v3
 	if _G.BotManager3v3 then
 		local activeBots = _G.BotManager3v3.GetActiveBots()
 		for bot, data in pairs(activeBots) do
 			if data.state ~= "dead" then
 				local hrp = bot:FindFirstChild("HumanoidRootPart")
 				if hrp then
-					local d = (hrp.Position - pos).Magnitude
-					if d < CONFIG.DETECTION_RANGE then
+					if isTargetInTerritory(monsterData, hrp.Position) and isTargetInRange(monsterPos, hrp.Position) then
+						local d = (hrp.Position - monsterPos).Magnitude
 						table.insert(bots, {type = "bot", instance = bot, position = hrp.Position, distance = d, team = data.team})
 					end
 				end
@@ -157,18 +210,10 @@ local function findTarget(monsterData)
 		end
 	end
 
-	-- UU TIEN TUYET DOI: Player gan nhat
+	-- Uu tien player gan nhat
 	table.sort(players, function(a, b) return a.distance < b.distance end)
 	if #players > 0 then
-		-- Luon truy duoi player neu trong pham vi phat hien
-		local closestPlayer = players[1]
-		if closestPlayer.distance <= CONFIG.CHASE_RANGE then
-			return closestPlayer
-		end
-		-- Neu player xa hon, van truy duoi neu trong DETECTION_RANGE
-		if CONFIG.AGGRESSIVE_CHASE and closestPlayer.distance <= CONFIG.DETECTION_RANGE then
-			return closestPlayer
-		end
+		return players[1]
 	end
 
 	-- Sau do den bot
@@ -211,18 +256,28 @@ moveTo = function(monsterData, pos)
 	end
 end
 
+-- ========== HOI MAU ==========
+-- Combat: 0 (khong hoi) | Returning: 15 (nhanh) | Idle: 5 (binh thuong)
 local function regenerateHP(monsterData, deltaTime)
 	local h = monsterData.character:FindFirstChildOfClass("Humanoid")
-	if h and h.Health > 0 then
-		h.Health = math.min(h.Health + CONFIG.HP_REGEN * deltaTime, h.MaxHealth)
+	if not h or h.Health <= 0 then return end
+
+	if monsterData.hasAggro then
+		-- Dang combat -> KHONG hoi mau
+		h.Health = math.min(h.Health + CONFIG.HP_REGEN_COMBAT * deltaTime, h.MaxHealth)
+	elseif monsterData.state == "returning" then
+		-- Dang quay ve spawn -> hoi mau nhanh
+		h.Health = math.min(h.Health + CONFIG.HP_REGEN_RETURNING * deltaTime, h.MaxHealth)
+	else
+		-- Idle tai spawn -> hoi mau binh thuong
+		h.Health = math.min(h.Health + CONFIG.HP_REGEN_IDLE * deltaTime, h.MaxHealth)
 	end
 end
 
-local function shouldRetreat(monsterData)
-	local h = monsterData.character:FindFirstChildOfClass("Humanoid")
-	return h and h.Health / h.MaxHealth < CONFIG.RETREAT_HEALTH
-end
-
+-- ========== UPDATE AI CHINH ==========
+-- Logic:
+-- 1. Monster danh den chet (khong retreat)
+-- 2. Player ra khoi pham vi tan cong -> quay ve spawn hoi mau
 local function updateAI(monsterData)
 	if monsterData.state == "dead" then return end
 
@@ -233,89 +288,69 @@ local function updateAI(monsterData)
 		return
 	end
 
-	-- Xu ly trang thai dang quay ve cua (khi ngung duoi gan team2)
-	if monsterData.state == "returningToDoor" then
-		local distToDoor = (hrp.Position - CONFIG.MONSTER_DOOR_POSITION).Magnitude
-		if distToDoor <= 15 then
-			-- Da ve den cua, chuyen sang patrol
-			monsterData.state = "patrolling"
-			monsterData.patrolTarget = nil
+	-- ========== TRANG THAI DANG QUAY VE SPAWN ==========
+	if monsterData.state == "returning" then
+		-- Neu bi danh lai khi dang quay ve -> quay lai danh
+		if monsterData.hasAggro and monsterData.aggroTarget then
+			monsterData.state = "chasing"
+			h.WalkSpeed = CONFIG.WALK_SPEED * CONFIG.CHASE_SPEED_MULT
+			-- Tiep tuc xu ly aggro o duoi (khong return)
 		else
-			-- Van dang di ve cua
-			moveTo(monsterData, CONFIG.MONSTER_DOOR_POSITION)
+			local distToSpawn = (hrp.Position - monsterData.spawnPos).Magnitude
+			if distToSpawn <= 8 then
+				-- Da ve den spawn -> idle, hoi mau binh thuong
+				monsterData.state = "idle"
+				monsterData.hasAggro = false
+				monsterData.aggroTarget = nil
+			else
+				-- Van dang di ve spawn
+				moveTo(monsterData, monsterData.spawnPos)
+				return
+			end
+		end
+	end
+
+	-- ========== KHONG CO AGGRO -> DUNG YEN TAI SPAWN ==========
+	if not monsterData.hasAggro then
+		local distFromSpawn = (hrp.Position - monsterData.spawnPos).Magnitude
+		if distFromSpawn > 15 then
+			-- Di lac khoi spawn -> quay ve
+			returnToSpawn(monsterData)
 			return
 		end
-	end
-
-	-- Retreat khi HP thap
-	if shouldRetreat(monsterData) then
-		monsterData.state = "retreating"
-		-- Reset toc do khi rut lui
-		h.WalkSpeed = CONFIG.WALK_SPEED
-		if monsterData.spawnPos then
-			moveTo(monsterData, monsterData.spawnPos)
-		end
+		-- Dung yen tai spawn, cho bi danh
+		monsterData.state = "idle"
 		return
 	end
 
-	-- KIEM TRA: Monster di qua xa tu vi tri spawn -> ngung duoi, quay ve spawn
-	local distFromSpawn = (hrp.Position - monsterData.spawnPos).Magnitude
-	if distFromSpawn > CONFIG.MAX_CHASE_DISTANCE then
-		monsterData.state = "returning"
-		h.WalkSpeed = CONFIG.WALK_SPEED
-		moveTo(monsterData, monsterData.spawnPos)
-		return
-	end
-
-	-- KIEM TRA: Monster den gan bat ky base nao -> ngung duoi, quay ve khu rung
-	if isNearAnyBase(hrp.Position) then
-		h.WalkSpeed = CONFIG.WALK_SPEED
-		returnToMonsterDoor(monsterData)
-		return
-	end
-
+	-- ========== CO AGGRO -> TIM MUC TIEU ==========
 	local target = findTarget(monsterData)
+
 	if target then
-		-- Tang toc do khi truy duoi player
+		-- Co muc tieu hop le (trong pham vi tan cong)
 		if target.type == "player" then
 			h.WalkSpeed = CONFIG.WALK_SPEED * CONFIG.CHASE_SPEED_MULT
 		else
 			h.WalkSpeed = CONFIG.WALK_SPEED
 		end
-		
+
 		if target.distance <= CONFIG.ATTACK_RANGE then
+			-- Gan du -> DANH
 			monsterData.state = "attacking"
 			attack(monsterData, target)
-		elseif target.distance <= CONFIG.CHASE_RANGE then
-			-- Chi duoi trong pham vi CHASE_RANGE (khong AGGRESSIVE_CHASE nua)
+		else
+			-- Con xa -> TRUY DUOI
 			monsterData.state = "chasing"
 			moveTo(monsterData, target.position)
-			
-			-- Log truy duoi player
-			if target.type == "player" and (not monsterData.lastChaseLog or tick() - monsterData.lastChaseLog > 2) then
-				monsterData.lastChaseLog = tick()
-				print(string.format("[MonsterManager3v3] %s TRUY DUOI player %s (dist=%.1f)", 
-					monsterData.name, target.instance.Name, target.distance))
-			end
-		else
-			-- Player qua xa -> ngung duoi, quay ve spawn
-			monsterData.state = "returning"
-			h.WalkSpeed = CONFIG.WALK_SPEED
-			moveTo(monsterData, monsterData.spawnPos)
 		end
 	else
-		-- Reset toc do khi khong co muc tieu
-		h.WalkSpeed = CONFIG.WALK_SPEED
-		monsterData.state = "patrolling"
-		if not monsterData.patrolTarget or tick() - monsterData.lastPatrol > 6 then
-			monsterData.patrolTarget = monsterData.spawnPos + Vector3.new(math.random(-CONFIG.PATROL_RANGE, CONFIG.PATROL_RANGE), 0, math.random(-CONFIG.PATROL_RANGE, CONFIG.PATROL_RANGE))
-			monsterData.lastPatrol = tick()
-		end
-		moveTo(monsterData, monsterData.patrolTarget)
+		-- KHONG TIM THAY MUC TIEU (player da ra khoi pham vi tan cong hoac chet)
+		-- -> MAT AGGRO, QUAY VE SPAWN HOI MAU
+		returnToSpawn(monsterData)
 	end
 end
 
-local function spawnMonster(spawnPos)
+local function spawnMonster(spawnPos, respawnTime)
 	local count = 0
 	for _ in pairs(activeMonsters) do count = count + 1 end
 	if count >= CONFIG.MAX_MONSTERS then return nil end
@@ -348,8 +383,10 @@ local function spawnMonster(spawnPos)
 		state = "idle",
 		lastAttack = 0,
 		spawnPos = spawnPos,
-		patrolTarget = nil,
-		lastPatrol = 0,
+		respawnTime = respawnTime or CONFIG.RESPAWN_TIME, -- Thoi gian hoi sinh rieng cho tung monster
+		hasAggro = false,         -- Monster chi tan cong khi bi danh
+		aggroTarget = nil,         -- Player da danh monster
+		lastKnownTargetPos = nil,  -- Vi tri cuoi cung thay target
 	}
 
 	activeMonsters[character] = monsterData
@@ -358,22 +395,58 @@ local function spawnMonster(spawnPos)
 	if humanoid then
 		humanoid.Died:Connect(function()
 			monsterData.state = "dead"
-			task.delay(CONFIG.RESPAWN_TIME, function()
+			monsterData.hasAggro = false
+			monsterData.aggroTarget = nil
+			task.delay(monsterData.respawnTime, function()
 				if character and character.Parent then character.Parent = nil end
 				activeMonsters[character] = nil
-				spawnMonster(spawnPos)
+				spawnMonster(spawnPos, monsterData.respawnTime)
 			end)
+		end)
+
+		-- ========== AGGRO: Monster bi danh -> bat dau truy duoi ==========
+		humanoid.HealthChanged:Connect(function(newHealth)
+			if newHealth < humanoid.MaxHealth and monsterData.state ~= "dead" then
+				-- Monster bi gay damage -> kich hoat aggro
+				monsterData.hasAggro = true
+
+				-- Tim player gan nhat lam aggro target (chi trong pham vi tan cong)
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local closestPlayer = nil
+					local closestDist = math.huge
+					for _, p in Players:GetPlayers() do
+						if p.Character then
+							local pH = p.Character:FindFirstChildOfClass("Humanoid")
+							local pHrp = p.Character:FindFirstChild("HumanoidRootPart")
+							if pH and pH.Health > 0 and pHrp then
+								-- Chi aggro player trong pham vi tan cong
+								if isTargetInTerritory(monsterData, pHrp.Position) and isTargetInRange(hrp.Position, pHrp.Position) then
+									local d = (pHrp.Position - hrp.Position).Magnitude
+									if d < closestDist then
+										closestDist = d
+										closestPlayer = p
+									end
+								end
+							end
+						end
+					end
+					if closestPlayer then
+						monsterData.aggroTarget = closestPlayer
+					end
+				end
+			end
 		end)
 	end
 
-	print(string.format("[MonsterManager3v3] Spawned: %s", name))
+	print(string.format("[MonsterManager3v3] Spawned: %s tai %s", name, tostring(spawnPos)))
 	return monsterData
 end
 
 local MonsterManager3v3 = {}
 
-function MonsterManager3v3.SpawnMonster(pos)
-	return spawnMonster(pos or Vector3.new(0, 10, 0))
+function MonsterManager3v3.SpawnMonster(pos, respawnTime)
+	return spawnMonster(pos or Vector3.new(0, 10, 0), respawnTime)
 end
 
 function MonsterManager3v3.GetMonsterCount()

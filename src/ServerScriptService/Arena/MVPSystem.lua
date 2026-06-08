@@ -48,7 +48,7 @@ local function initPlayerStats(playerName, teamName)
 			kills = 0,
 			baseDamage = 0,
 			team = teamName or "Unknown",
-			isBot = playerName:find("%[BOT%]") ~= nil or playerName:find("%[MONSTER%]") ~= nil
+			isBot = playerName:find("%[BOT%]") ~= nil
 		}
 	else
 	end
@@ -185,8 +185,22 @@ local function startMatch(matchData)
 	
 end
 
+-- Kiem tra xem ten co phai la monster khong
+local function isMonsterName(name)
+	if not name then return false end
+	return name:find("%[MONSTER%]") ~= nil or name:find("%[Monster%]") ~= nil
+end
+
 -- Ghi nhận kill
 local function recordKill(killerName, victimName)
+	-- Monster kill KHONG duoc tinh vao MVP (ca khi lam killer lan victim)
+	if isMonsterName(killerName) then
+		return
+	end
+	if isMonsterName(victimName) then
+		return
+	end
+	
 	if not playerStats[killerName] then
 		-- Tìm team của killer
 		local killerTeam = nil
@@ -242,6 +256,11 @@ end
 
 -- Ghi nhận base damage
 local function recordBaseDamage(attackerName, damage)
+	-- Monster KHONG duoc tinh vao MVP
+	if isMonsterName(attackerName) then
+		return
+	end
+	
 	if not playerStats[attackerName] then
 		-- Tìm team của attacker
 		local attackerTeam = nil

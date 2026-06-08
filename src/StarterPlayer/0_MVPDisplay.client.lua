@@ -4,14 +4,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 
--- Äá»£i player sáºµn sÃ ng
+-- Äá»£i player sáºµn sÃ ng
 local player = Players.LocalPlayer
 if not player then
 	Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
 	player = Players.LocalPlayer
 end
 
--- Äá»£i PlayerGui sáºµn sÃ ng
+-- Äá»£i PlayerGui sáºµn sÃ ng
 local PlayerGui = player:WaitForChild("PlayerGui", 10)
 if not PlayerGui then
 	warn("[MVP Display] KHÃ”NG TÃŒM THáº¤Y PlayerGui!")
@@ -19,7 +19,7 @@ if not PlayerGui then
 end
 
 
--- ========== Táº O UI ==========
+-- ========== Táº O UI ==========
 
 -- Táº¡o ScreenGui
 local screenGui = Instance.new("ScreenGui")
@@ -40,7 +40,7 @@ container.ZIndex = 100
 container.ClipsDescendants = false
 container.Parent = screenGui
 
--- Viá»n vÃ ng
+-- Viá»n vÃ ng
 local stroke = Instance.new("UIStroke")
 stroke.Color = Color3.fromRGB(200, 160, 0)
 stroke.Thickness = 4
@@ -124,7 +124,7 @@ winnerDamage.Name = "WinnerDamage"
 winnerDamage.Size = UDim2.new(0.5, -10, 0, 25)
 winnerDamage.Position = UDim2.new(0, 10, 0, 165)
 winnerDamage.BackgroundTransparency = 1
-winnerDamage.Text = "ðŸ  Damage: 0"
+winnerDamage.Text = "ðŸ  Damage: 0"
 winnerDamage.TextColor3 = Color3.fromRGB(255, 255, 255)
 winnerDamage.TextSize = 16
 winnerDamage.Font = Enum.Font.Gotham
@@ -208,7 +208,7 @@ loserDamage.Name = "LoserDamage"
 loserDamage.Size = UDim2.new(0.5, -10, 0, 25)
 loserDamage.Position = UDim2.new(0.5, 0, 0, 165)
 loserDamage.BackgroundTransparency = 1
-loserDamage.Text = "ðŸ  Damage: 0"
+loserDamage.Text = "ðŸ  Damage: 0"
 loserDamage.TextColor3 = Color3.fromRGB(255, 255, 255)
 loserDamage.TextSize = 16
 loserDamage.Font = Enum.Font.Gotham
@@ -259,13 +259,13 @@ local storedMVPData = nil
 -- ========== HÃ€M HIá»‚N THá»Š ==========
 local function showMVP(data)
 	
-	-- Náº¿u khÃ´ng cÃ³ data truyá»n vÃ o, dÃ¹ng data Ä‘Ã£ lÆ°u
+	-- Náº¿u khÃ´ng cÃ³ data truyá»n vÃ o, dÃ¹ng data Ä‘Ã£ lÆ°u
 	if not data then
 		data = storedMVPData
 	end
 	
 	if not data then
-		warn("[MVP Display] âš ï¸ KHÃ”NG CÃ“ DATA! Cannot show MVP GUI")
+		warn("[MVP Display] âš ï¸ KHÃ”NG CÃ“ DATA! Cannot show MVP GUI")
 		return
 	end
 	
@@ -279,7 +279,7 @@ local function showMVP(data)
 		local winnerIcon = winnerMVP.isBot and "ðŸ¤– " or "ðŸ‘¤ "
 		winnerName.Text = winnerIcon .. (winnerMVP.name or "Unknown")
 		winnerKills.Text = "ðŸ—¡ï¸ Kills: " .. tostring(winnerMVP.kills or 0)
-		winnerDamage.Text = "ðŸ  Damage: " .. tostring(winnerMVP.baseDamage or 0)
+		winnerDamage.Text = "ðŸ  Damage: " .. tostring(winnerMVP.baseDamage or 0)
 		winnerScore.Text = "â­ Tá»•ng: " .. tostring(winnerMVP.score or 0)
 		
 		if winnerTeam == "Team1" then
@@ -296,7 +296,7 @@ local function showMVP(data)
 		local loserIcon = loserMVP.isBot and "ðŸ¤– " or "ðŸ‘¤ "
 		loserName.Text = loserIcon .. (loserMVP.name or "Unknown")
 		loserKills.Text = "ðŸ—¡ï¸ Kills: " .. tostring(loserMVP.kills or 0)
-		loserDamage.Text = "ðŸ  Damage: " .. tostring(loserMVP.baseDamage or 0)
+		loserDamage.Text = "ðŸ  Damage: " .. tostring(loserMVP.baseDamage or 0)
 		loserScore.Text = "â­ Tá»•ng: " .. tostring(loserMVP.score or 0)
 		
 		if winnerTeam == "Team1" then
@@ -323,7 +323,7 @@ local function showMVP(data)
 	
 end
 
--- HÃ m lÆ°u data (khÃ´ng hiá»ƒn thá»‹)
+-- HÃ m lÆ°u data (khÃ´ng hiá»ƒn thá»‹)
 local function storeMVPData(data)
 	storedMVPData = data
 end
